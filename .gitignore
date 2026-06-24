@@ -18,3 +18,8 @@ Thumbs.db
 
 # 临时截图副本
 开发文档/ref_*.jpeg
+
+# 误克隆到工作区的 Flutter SDK 残留（正式安装在 D:\Flutter）
+/flutter/
+
+# App 工程在 dakaqi/ 子目录

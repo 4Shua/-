@@ -14,19 +14,28 @@
 
 ## 关键目录
 
+App 工程在 **`dakaqi/`** 子目录：
+
 ```
-lib/
+dakaqi/lib/
   main.dart / app.dart
   core/theme/           # 颜色、间距、主题
+  core/providers/       # 数据库 Provider
   data/db/              # Drift 表与 DAO
   data/repositories/    # 数据访问
   domain/models/        # 领域模型
-  domain/rules/         # 打卡规则、节假日
   features/home/        # 首页
-  features/habit_form/  # 新建/编辑习惯
-  features/habit_detail/# 详情浮层
-  features/settings/    # 设置
-  widgets/              # SegmentedRingButton, MonthHeatmapRow
+  widgets/              # SegmentedRingButton, MonthHeatmapRow（Phase 2）
+```
+
+## Flutter 命令
+
+在 `dakaqi/` 目录下执行：
+
+```bash
+flutter pub get
+flutter analyze
+flutter run
 ```
 
 ## MVP 边界
