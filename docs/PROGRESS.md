@@ -38,4 +38,5 @@
 
 ## 最近提交
 
-- （Phase 1 commit 待创建）
+- 19e1d94 — feat(dakaqi): Phase 1 Flutter 工程骨架与首页占位
+- 远程仓库：https://github.com/4Shua/-.git
