@@ -1,0 +1,22 @@
+---
+description: 乱七八糟打卡器项目上下文与续开发入口
+alwaysApply: true
+---
+
+# 项目上下文
+
+- **项目**：乱七八糟打卡器（HabitKit 风格自用习惯打卡 App）
+- **栈**：Flutter + Drift + Riverpod，纯本地 SQLite，Android 优先
+- **AI 入口**：先读 `AGENTS.md`，再读 `docs/PROGRESS.md`
+
+## 换设备续开发
+
+1. 读 `docs/PROGRESS.md` 的「下一步」
+2. 读 `docs/ARCHITECTURE.md` 了解数据模型
+3. `flutter pub get && flutter analyze`
+4. 开发完成后更新 PROGRESS
+
+## 注意
+
+- `开发文档/` 为需求与 UI 参考截图，只读勿删
+- MVP 边界见 `docs/ARCHITECTURE.md`「明确不做」

@@ -1,0 +1,21 @@
+---
+description: Flutter/Dart 编码约定
+globs: "**/*.dart"
+alwaysApply: false
+---
+
+# Flutter 约定
+
+- **目录**：feature-first（`lib/features/<name>/`），共享组件放 `lib/widgets/`
+- **主题**：颜色/间距用 `lib/core/theme/`，禁止魔法数字
+- **状态**：Riverpod `@riverpod`，Repository 注入，Widget 不直接访问 Drift
+- **命名**：文件 snake_case，类 PascalCase
+- **自研组件**：`SegmentedRingButton`、`MonthHeatmapRow` 放 `lib/widgets/`
+
+```dart
+// 颜色引用 theme，不要硬编码
+color: AppColors.cardBackground,
+
+// 不要
+color: Color(0xFFF2F2F7),
+```

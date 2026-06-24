@@ -1,0 +1,24 @@
+---
+description: 会话结束前更新进度与提交规范
+alwaysApply: true
+---
+
+# 会话交接
+
+## 开发结束前必须
+
+1. 更新 `docs/PROGRESS.md`：当前阶段、已完成、下一步、最近提交
+2. 架构变更同步 `docs/ARCHITECTURE.md`
+3. 重大决策写入 `docs/DECISIONS.md`
+
+## Commit 格式
+
+`type(scope): 中文简述`
+
+- `feat` 新功能 | `fix` 修复 | `docs` 文档 | `chore` 构建
+
+示例：`feat(home): 习惯卡片列表`
+
+## 推送
+
+每次 meaningful 会话结束前 push，确保另一台设备能 pull 最新 PROGRESS。
