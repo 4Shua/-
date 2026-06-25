@@ -1,6 +1,6 @@
 # 开发进度
 
-> 最后更新：2025-06-24 | Phase 4 完成（MVP 初版）
+> 最后更新：2025-06-25 | Phase 4 完成（MVP 初版）
 
 ## 当前阶段
 
@@ -29,5 +29,6 @@
 
 ## 最近提交
 
+- c698dcb — feat(detail): Phase 4 习惯详情浮层与设置页
 - 3cbb919 — docs(progress): 记录 Phase 3 提交哈希
 - 629d05d — feat(habit-form): Phase 3 新建编辑习惯表单
