@@ -40,8 +40,8 @@ abstract final class ReminderService {
 
     tz_data.initializeTimeZones();
     try {
-      final timeZoneName = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      final timeZoneInfo = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
     } on Object catch (e) {
       debugPrint('ReminderService: timezone fallback ($e)');
       tz.setLocalLocation(tz.getLocation('Asia/Shanghai'));
