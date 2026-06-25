@@ -40,5 +40,6 @@
 
 ## 最近提交
 
+- 5f08c0b — feat(home): Phase 2 分段圆环打卡与按月热力图
 - 2376a6b — docs(progress): 记录 Phase 1 提交哈希与远程仓库
 - 19e1d94 — feat(dakaqi): Phase 1 Flutter 工程骨架与首页占位
