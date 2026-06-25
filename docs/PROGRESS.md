@@ -37,5 +37,6 @@
 
 ## 最近提交
 
+- 629d05d — feat(habit-form): Phase 3 新建编辑习惯表单
 - 8c047a0 — docs(progress): 记录 Phase 2 提交哈希
 - 5f08c0b — feat(home): Phase 2 分段圆环打卡与按月热力图
