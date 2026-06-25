@@ -1,14 +1,12 @@
 import 'package:dakaqi/core/constants/habit_assets.dart';
 import 'package:dakaqi/core/theme/app_theme.dart';
 import 'package:dakaqi/core/utils/date_utils.dart';
-import 'package:dakaqi/domain/models/enums.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
 import 'package:dakaqi/features/habit_detail/widgets/read_only_month_calendar.dart';
 import 'package:dakaqi/features/habit_form/pages/habit_form_screen.dart';
 import 'package:dakaqi/features/home/providers/check_in_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 Future<void> showHabitDetailSheet(
   BuildContext context,
@@ -69,7 +67,7 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
           orElse: () => const <String, int>{},
         );
 
-    final monthLabel = DateFormat.yMMMM('zh_CN').format(_visibleMonth);
+    final monthLabel = AppDateUtils.formatYearMonth(_visibleMonth);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.72,
@@ -164,6 +162,7 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
               const SizedBox(height: 24),
               ReadOnlyMonthCalendar(
                 month: _visibleMonth,
+                habit: habit,
                 checkIns: checkIns,
                 maxCount: habit.completionsPerPeriod,
                 color: color,

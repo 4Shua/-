@@ -1,4 +1,6 @@
 import 'package:dakaqi/core/utils/date_utils.dart';
+import 'package:dakaqi/data/db/database.dart';
+import 'package:dakaqi/domain/rules/check_in_rules.dart';
 import 'package:flutter/material.dart';
 
 /// 按月分组的热力图，横向滚动。
@@ -6,6 +8,7 @@ class MonthHeatmapRow extends StatelessWidget {
   const MonthHeatmapRow({
     super.key,
     required this.data,
+    required this.habit,
     required this.maxCount,
     required this.color,
     this.monthsBack = 6,
@@ -15,6 +18,7 @@ class MonthHeatmapRow extends StatelessWidget {
 
   /// date (yyyy-MM-dd) -> count
   final Map<String, int> data;
+  final Habit habit;
   final int maxCount;
   final Color color;
   final int monthsBack;
@@ -37,6 +41,7 @@ class MonthHeatmapRow extends StatelessWidget {
           return _MonthColumn(
             month: months[index],
             today: today,
+            habit: habit,
             data: data,
             maxCount: maxCount,
             color: color,
@@ -53,6 +58,7 @@ class _MonthColumn extends StatelessWidget {
   const _MonthColumn({
     required this.month,
     required this.today,
+    required this.habit,
     required this.data,
     required this.maxCount,
     required this.color,
@@ -62,6 +68,7 @@ class _MonthColumn extends StatelessWidget {
 
   final DateTime month;
   final DateTime today;
+  final Habit habit;
   final Map<String, int> data;
   final int maxCount;
   final Color color;
@@ -106,6 +113,7 @@ class _MonthColumn extends StatelessWidget {
                 }
                 final key = AppDateUtils.formatDate(date);
                 final count = data[key] ?? 0;
+                final required = CheckInRules.canCheckInOn(habit, date);
                 return Padding(
                   padding: EdgeInsets.only(right: col < 6 ? cellGap : 0),
                   child: _HeatCell(
@@ -113,6 +121,7 @@ class _MonthColumn extends StatelessWidget {
                     maxCount: maxCount,
                     color: color,
                     size: cellSize,
+                    required: required,
                   ),
                 );
               }),
@@ -130,15 +139,28 @@ class _HeatCell extends StatelessWidget {
     required this.maxCount,
     required this.color,
     required this.size,
+    required this.required,
   });
 
   final int count;
   final int maxCount;
   final Color color;
   final double size;
+  final bool required;
 
   @override
   Widget build(BuildContext context) {
+    if (!required && count == 0) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEBEBEF).withValues(alpha: 0.22),
+          borderRadius: BorderRadius.circular(2.5),
+        ),
+      );
+    }
+
     final ratio = maxCount > 0 ? (count / maxCount).clamp(0.0, 1.0) : 0.0;
     final bg = count == 0
         ? const Color(0xFFEBEBEF)

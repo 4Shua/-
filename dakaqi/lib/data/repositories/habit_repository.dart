@@ -1,3 +1,4 @@
+import 'package:dakaqi/core/notifications/reminder_service.dart';
 import 'package:dakaqi/core/utils/date_utils.dart';
 import 'package:dakaqi/data/db/database.dart';
 import 'package:dakaqi/domain/models/enums.dart';
@@ -73,10 +74,14 @@ class HabitRepository {
   }
 
   /// 点击打卡：未满则 +1，已满则重置为 0。
-  /// 返回新的 count；若不允许打卡返回 -1。
+  /// 返回新的 count；-1 不在打卡日；-2 不在有效时间段。
   Future<int> tapCheckIn(Habit habit) async {
-    if (!CheckInRules.canCheckInOn(habit, AppDateUtils.today())) {
+    final now = DateTime.now();
+    if (!CheckInRules.canCheckInOn(habit, now)) {
       return -1;
+    }
+    if (!CheckInRules.canCheckInNow(habit, now)) {
+      return -2;
     }
 
     final date = AppDateUtils.formatDate(AppDateUtils.today());
@@ -206,9 +211,13 @@ class HabitRepository {
     required int completionsPerPeriod,
     required ActiveDaysType activeDaysType,
     int? tagId,
+    bool reminderEnabled = false,
+    String? reminderTime,
+    int? checkInWindowStartMinutes,
+    int? checkInWindowEndMinutes,
   }) async {
     final sortOrder = (await maxSortOrder()) + 1;
-    return _db.into(_db.habits).insert(
+    final id = await _db.into(_db.habits).insert(
           HabitsCompanion.insert(
             name: name,
             description: Value(description),
@@ -219,8 +228,17 @@ class HabitRepository {
             activeDaysType: activeDaysType,
             tagId: Value(tagId),
             sortOrder: Value(sortOrder),
+            reminderEnabled: Value(reminderEnabled),
+            reminderTime: Value(reminderTime),
+            checkInWindowStartMinutes: Value(checkInWindowStartMinutes),
+            checkInWindowEndMinutes: Value(checkInWindowEndMinutes),
           ),
         );
+    final habit = await getHabit(id);
+    if (habit != null) {
+      await ReminderService.rescheduleHabit(habit);
+    }
+    return id;
   }
 
   Future<void> updateHabit({
@@ -234,6 +252,10 @@ class HabitRepository {
     required ActiveDaysType activeDaysType,
     int? tagId,
     bool clearTag = false,
+    bool reminderEnabled = false,
+    String? reminderTime,
+    int? checkInWindowStartMinutes,
+    int? checkInWindowEndMinutes,
   }) async {
     await (_db.update(_db.habits)..where((t) => t.id.equals(id))).write(
           HabitsCompanion(
@@ -245,9 +267,19 @@ class HabitRepository {
             completionsPerPeriod: Value(completionsPerPeriod.clamp(1, 20)),
             activeDaysType: Value(activeDaysType),
             tagId: clearTag ? const Value(null) : Value(tagId),
+            reminderEnabled: Value(reminderEnabled),
+            reminderTime: Value(reminderTime),
+            checkInWindowStartMinutes: Value(checkInWindowStartMinutes),
+            checkInWindowEndMinutes: Value(checkInWindowEndMinutes),
           ),
         );
+    final habit = await getHabit(id);
+    if (habit != null) {
+      await ReminderService.rescheduleHabit(habit);
+    }
   }
+
+  Future<void> rescheduleAllReminders() => ReminderService.rescheduleAll(this);
 
   Future<Tag?> getTag(int id) {
     return (_db.select(_db.tags)..where((t) => t.id.equals(id)))

@@ -376,6 +376,54 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _reminderEnabledMeta = const VerificationMeta(
+    'reminderEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> reminderEnabled = GeneratedColumn<bool>(
+    'reminder_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("reminder_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _reminderTimeMeta = const VerificationMeta(
+    'reminderTime',
+  );
+  @override
+  late final GeneratedColumn<String> reminderTime = GeneratedColumn<String>(
+    'reminder_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _checkInWindowStartMinutesMeta =
+      const VerificationMeta('checkInWindowStartMinutes');
+  @override
+  late final GeneratedColumn<int> checkInWindowStartMinutes =
+      GeneratedColumn<int>(
+        'check_in_window_start_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _checkInWindowEndMinutesMeta =
+      const VerificationMeta('checkInWindowEndMinutes');
+  @override
+  late final GeneratedColumn<int> checkInWindowEndMinutes =
+      GeneratedColumn<int>(
+        'check_in_window_end_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -389,6 +437,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     tagId,
     sortOrder,
     createdAt,
+    reminderEnabled,
+    reminderTime,
+    checkInWindowStartMinutes,
+    checkInWindowEndMinutes,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -465,6 +517,42 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('reminder_enabled')) {
+      context.handle(
+        _reminderEnabledMeta,
+        reminderEnabled.isAcceptableOrUnknown(
+          data['reminder_enabled']!,
+          _reminderEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reminder_time')) {
+      context.handle(
+        _reminderTimeMeta,
+        reminderTime.isAcceptableOrUnknown(
+          data['reminder_time']!,
+          _reminderTimeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('check_in_window_start_minutes')) {
+      context.handle(
+        _checkInWindowStartMinutesMeta,
+        checkInWindowStartMinutes.isAcceptableOrUnknown(
+          data['check_in_window_start_minutes']!,
+          _checkInWindowStartMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('check_in_window_end_minutes')) {
+      context.handle(
+        _checkInWindowEndMinutesMeta,
+        checkInWindowEndMinutes.isAcceptableOrUnknown(
+          data['check_in_window_end_minutes']!,
+          _checkInWindowEndMinutesMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -522,6 +610,22 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      reminderEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}reminder_enabled'],
+      )!,
+      reminderTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reminder_time'],
+      ),
+      checkInWindowStartMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}check_in_window_start_minutes'],
+      ),
+      checkInWindowEndMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}check_in_window_end_minutes'],
+      ),
     );
   }
 
@@ -548,6 +652,10 @@ class Habit extends DataClass implements Insertable<Habit> {
   final int? tagId;
   final int sortOrder;
   final DateTime createdAt;
+  final bool reminderEnabled;
+  final String? reminderTime;
+  final int? checkInWindowStartMinutes;
+  final int? checkInWindowEndMinutes;
   const Habit({
     required this.id,
     required this.name,
@@ -560,6 +668,10 @@ class Habit extends DataClass implements Insertable<Habit> {
     this.tagId,
     required this.sortOrder,
     required this.createdAt,
+    required this.reminderEnabled,
+    this.reminderTime,
+    this.checkInWindowStartMinutes,
+    this.checkInWindowEndMinutes,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -587,6 +699,20 @@ class Habit extends DataClass implements Insertable<Habit> {
     }
     map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['reminder_enabled'] = Variable<bool>(reminderEnabled);
+    if (!nullToAbsent || reminderTime != null) {
+      map['reminder_time'] = Variable<String>(reminderTime);
+    }
+    if (!nullToAbsent || checkInWindowStartMinutes != null) {
+      map['check_in_window_start_minutes'] = Variable<int>(
+        checkInWindowStartMinutes,
+      );
+    }
+    if (!nullToAbsent || checkInWindowEndMinutes != null) {
+      map['check_in_window_end_minutes'] = Variable<int>(
+        checkInWindowEndMinutes,
+      );
+    }
     return map;
   }
 
@@ -607,6 +733,17 @@ class Habit extends DataClass implements Insertable<Habit> {
           : Value(tagId),
       sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
+      reminderEnabled: Value(reminderEnabled),
+      reminderTime: reminderTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminderTime),
+      checkInWindowStartMinutes:
+          checkInWindowStartMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(checkInWindowStartMinutes),
+      checkInWindowEndMinutes: checkInWindowEndMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(checkInWindowEndMinutes),
     );
   }
 
@@ -633,6 +770,14 @@ class Habit extends DataClass implements Insertable<Habit> {
       tagId: serializer.fromJson<int?>(json['tagId']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      reminderEnabled: serializer.fromJson<bool>(json['reminderEnabled']),
+      reminderTime: serializer.fromJson<String?>(json['reminderTime']),
+      checkInWindowStartMinutes: serializer.fromJson<int?>(
+        json['checkInWindowStartMinutes'],
+      ),
+      checkInWindowEndMinutes: serializer.fromJson<int?>(
+        json['checkInWindowEndMinutes'],
+      ),
     );
   }
   @override
@@ -654,6 +799,14 @@ class Habit extends DataClass implements Insertable<Habit> {
       'tagId': serializer.toJson<int?>(tagId),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'reminderEnabled': serializer.toJson<bool>(reminderEnabled),
+      'reminderTime': serializer.toJson<String?>(reminderTime),
+      'checkInWindowStartMinutes': serializer.toJson<int?>(
+        checkInWindowStartMinutes,
+      ),
+      'checkInWindowEndMinutes': serializer.toJson<int?>(
+        checkInWindowEndMinutes,
+      ),
     };
   }
 
@@ -669,6 +822,10 @@ class Habit extends DataClass implements Insertable<Habit> {
     Value<int?> tagId = const Value.absent(),
     int? sortOrder,
     DateTime? createdAt,
+    bool? reminderEnabled,
+    Value<String?> reminderTime = const Value.absent(),
+    Value<int?> checkInWindowStartMinutes = const Value.absent(),
+    Value<int?> checkInWindowEndMinutes = const Value.absent(),
   }) => Habit(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -681,6 +838,14 @@ class Habit extends DataClass implements Insertable<Habit> {
     tagId: tagId.present ? tagId.value : this.tagId,
     sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
+    reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+    reminderTime: reminderTime.present ? reminderTime.value : this.reminderTime,
+    checkInWindowStartMinutes: checkInWindowStartMinutes.present
+        ? checkInWindowStartMinutes.value
+        : this.checkInWindowStartMinutes,
+    checkInWindowEndMinutes: checkInWindowEndMinutes.present
+        ? checkInWindowEndMinutes.value
+        : this.checkInWindowEndMinutes,
   );
   Habit copyWithCompanion(HabitsCompanion data) {
     return Habit(
@@ -703,6 +868,18 @@ class Habit extends DataClass implements Insertable<Habit> {
       tagId: data.tagId.present ? data.tagId.value : this.tagId,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      reminderEnabled: data.reminderEnabled.present
+          ? data.reminderEnabled.value
+          : this.reminderEnabled,
+      reminderTime: data.reminderTime.present
+          ? data.reminderTime.value
+          : this.reminderTime,
+      checkInWindowStartMinutes: data.checkInWindowStartMinutes.present
+          ? data.checkInWindowStartMinutes.value
+          : this.checkInWindowStartMinutes,
+      checkInWindowEndMinutes: data.checkInWindowEndMinutes.present
+          ? data.checkInWindowEndMinutes.value
+          : this.checkInWindowEndMinutes,
     );
   }
 
@@ -719,7 +896,11 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('activeDaysType: $activeDaysType, ')
           ..write('tagId: $tagId, ')
           ..write('sortOrder: $sortOrder, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('reminderEnabled: $reminderEnabled, ')
+          ..write('reminderTime: $reminderTime, ')
+          ..write('checkInWindowStartMinutes: $checkInWindowStartMinutes, ')
+          ..write('checkInWindowEndMinutes: $checkInWindowEndMinutes')
           ..write(')'))
         .toString();
   }
@@ -737,6 +918,10 @@ class Habit extends DataClass implements Insertable<Habit> {
     tagId,
     sortOrder,
     createdAt,
+    reminderEnabled,
+    reminderTime,
+    checkInWindowStartMinutes,
+    checkInWindowEndMinutes,
   );
   @override
   bool operator ==(Object other) =>
@@ -752,7 +937,11 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.activeDaysType == this.activeDaysType &&
           other.tagId == this.tagId &&
           other.sortOrder == this.sortOrder &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.reminderEnabled == this.reminderEnabled &&
+          other.reminderTime == this.reminderTime &&
+          other.checkInWindowStartMinutes == this.checkInWindowStartMinutes &&
+          other.checkInWindowEndMinutes == this.checkInWindowEndMinutes);
 }
 
 class HabitsCompanion extends UpdateCompanion<Habit> {
@@ -767,6 +956,10 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<int?> tagId;
   final Value<int> sortOrder;
   final Value<DateTime> createdAt;
+  final Value<bool> reminderEnabled;
+  final Value<String?> reminderTime;
+  final Value<int?> checkInWindowStartMinutes;
+  final Value<int?> checkInWindowEndMinutes;
   const HabitsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -779,6 +972,10 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.tagId = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.reminderEnabled = const Value.absent(),
+    this.reminderTime = const Value.absent(),
+    this.checkInWindowStartMinutes = const Value.absent(),
+    this.checkInWindowEndMinutes = const Value.absent(),
   });
   HabitsCompanion.insert({
     this.id = const Value.absent(),
@@ -792,6 +989,10 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.tagId = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.reminderEnabled = const Value.absent(),
+    this.reminderTime = const Value.absent(),
+    this.checkInWindowStartMinutes = const Value.absent(),
+    this.checkInWindowEndMinutes = const Value.absent(),
   }) : name = Value(name),
        iconKey = Value(iconKey),
        colorHex = Value(colorHex),
@@ -809,6 +1010,10 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<int>? tagId,
     Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
+    Expression<bool>? reminderEnabled,
+    Expression<String>? reminderTime,
+    Expression<int>? checkInWindowStartMinutes,
+    Expression<int>? checkInWindowEndMinutes,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -823,6 +1028,12 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (tagId != null) 'tag_id': tagId,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
+      if (reminderEnabled != null) 'reminder_enabled': reminderEnabled,
+      if (reminderTime != null) 'reminder_time': reminderTime,
+      if (checkInWindowStartMinutes != null)
+        'check_in_window_start_minutes': checkInWindowStartMinutes,
+      if (checkInWindowEndMinutes != null)
+        'check_in_window_end_minutes': checkInWindowEndMinutes,
     });
   }
 
@@ -838,6 +1049,10 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Value<int?>? tagId,
     Value<int>? sortOrder,
     Value<DateTime>? createdAt,
+    Value<bool>? reminderEnabled,
+    Value<String?>? reminderTime,
+    Value<int?>? checkInWindowStartMinutes,
+    Value<int?>? checkInWindowEndMinutes,
   }) {
     return HabitsCompanion(
       id: id ?? this.id,
@@ -851,6 +1066,12 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       tagId: tagId ?? this.tagId,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
+      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+      reminderTime: reminderTime ?? this.reminderTime,
+      checkInWindowStartMinutes:
+          checkInWindowStartMinutes ?? this.checkInWindowStartMinutes,
+      checkInWindowEndMinutes:
+          checkInWindowEndMinutes ?? this.checkInWindowEndMinutes,
     );
   }
 
@@ -894,6 +1115,22 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (reminderEnabled.present) {
+      map['reminder_enabled'] = Variable<bool>(reminderEnabled.value);
+    }
+    if (reminderTime.present) {
+      map['reminder_time'] = Variable<String>(reminderTime.value);
+    }
+    if (checkInWindowStartMinutes.present) {
+      map['check_in_window_start_minutes'] = Variable<int>(
+        checkInWindowStartMinutes.value,
+      );
+    }
+    if (checkInWindowEndMinutes.present) {
+      map['check_in_window_end_minutes'] = Variable<int>(
+        checkInWindowEndMinutes.value,
+      );
+    }
     return map;
   }
 
@@ -910,7 +1147,11 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('activeDaysType: $activeDaysType, ')
           ..write('tagId: $tagId, ')
           ..write('sortOrder: $sortOrder, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('reminderEnabled: $reminderEnabled, ')
+          ..write('reminderTime: $reminderTime, ')
+          ..write('checkInWindowStartMinutes: $checkInWindowStartMinutes, ')
+          ..write('checkInWindowEndMinutes: $checkInWindowEndMinutes')
           ..write(')'))
         .toString();
   }
@@ -1531,6 +1772,10 @@ typedef $$HabitsTableCreateCompanionBuilder =
       Value<int?> tagId,
       Value<int> sortOrder,
       Value<DateTime> createdAt,
+      Value<bool> reminderEnabled,
+      Value<String?> reminderTime,
+      Value<int?> checkInWindowStartMinutes,
+      Value<int?> checkInWindowEndMinutes,
     });
 typedef $$HabitsTableUpdateCompanionBuilder =
     HabitsCompanion Function({
@@ -1545,6 +1790,10 @@ typedef $$HabitsTableUpdateCompanionBuilder =
       Value<int?> tagId,
       Value<int> sortOrder,
       Value<DateTime> createdAt,
+      Value<bool> reminderEnabled,
+      Value<String?> reminderTime,
+      Value<int?> checkInWindowStartMinutes,
+      Value<int?> checkInWindowEndMinutes,
     });
 
 final class $$HabitsTableReferences
@@ -1645,6 +1894,26 @@ class $$HabitsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get reminderEnabled => $composableBuilder(
+    column: $table.reminderEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reminderTime => $composableBuilder(
+    column: $table.reminderTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get checkInWindowStartMinutes => $composableBuilder(
+    column: $table.checkInWindowStartMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get checkInWindowEndMinutes => $composableBuilder(
+    column: $table.checkInWindowEndMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1756,6 +2025,26 @@ class $$HabitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get reminderEnabled => $composableBuilder(
+    column: $table.reminderEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reminderTime => $composableBuilder(
+    column: $table.reminderTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get checkInWindowStartMinutes => $composableBuilder(
+    column: $table.checkInWindowStartMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get checkInWindowEndMinutes => $composableBuilder(
+    column: $table.checkInWindowEndMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TagsTableOrderingComposer get tagId {
     final $$TagsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -1828,6 +2117,26 @@ class $$HabitsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get reminderEnabled => $composableBuilder(
+    column: $table.reminderEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reminderTime => $composableBuilder(
+    column: $table.reminderTime,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get checkInWindowStartMinutes => $composableBuilder(
+    column: $table.checkInWindowStartMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get checkInWindowEndMinutes => $composableBuilder(
+    column: $table.checkInWindowEndMinutes,
+    builder: (column) => column,
+  );
 
   $$TagsTableAnnotationComposer get tagId {
     final $$TagsTableAnnotationComposer composer = $composerBuilder(
@@ -1917,6 +2226,10 @@ class $$HabitsTableTableManager
                 Value<int?> tagId = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> reminderEnabled = const Value.absent(),
+                Value<String?> reminderTime = const Value.absent(),
+                Value<int?> checkInWindowStartMinutes = const Value.absent(),
+                Value<int?> checkInWindowEndMinutes = const Value.absent(),
               }) => HabitsCompanion(
                 id: id,
                 name: name,
@@ -1929,6 +2242,10 @@ class $$HabitsTableTableManager
                 tagId: tagId,
                 sortOrder: sortOrder,
                 createdAt: createdAt,
+                reminderEnabled: reminderEnabled,
+                reminderTime: reminderTime,
+                checkInWindowStartMinutes: checkInWindowStartMinutes,
+                checkInWindowEndMinutes: checkInWindowEndMinutes,
               ),
           createCompanionCallback:
               ({
@@ -1943,6 +2260,10 @@ class $$HabitsTableTableManager
                 Value<int?> tagId = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> reminderEnabled = const Value.absent(),
+                Value<String?> reminderTime = const Value.absent(),
+                Value<int?> checkInWindowStartMinutes = const Value.absent(),
+                Value<int?> checkInWindowEndMinutes = const Value.absent(),
               }) => HabitsCompanion.insert(
                 id: id,
                 name: name,
@@ -1955,6 +2276,10 @@ class $$HabitsTableTableManager
                 tagId: tagId,
                 sortOrder: sortOrder,
                 createdAt: createdAt,
+                reminderEnabled: reminderEnabled,
+                reminderTime: reminderTime,
+                checkInWindowStartMinutes: checkInWindowStartMinutes,
+                checkInWindowEndMinutes: checkInWindowEndMinutes,
               ),
           withReferenceMapper: (p0) => p0
               .map(

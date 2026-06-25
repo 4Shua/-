@@ -20,6 +20,11 @@ class Habits extends Table {
   IntColumn get tagId => integer().nullable().references(Tags, #id)();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get reminderEnabled =>
+      boolean().withDefault(const Constant(false))();
+  TextColumn get reminderTime => text().nullable()();
+  IntColumn get checkInWindowStartMinutes => integer().nullable()();
+  IntColumn get checkInWindowEndMinutes => integer().nullable()();
 }
 
 class CheckInRecords extends Table {

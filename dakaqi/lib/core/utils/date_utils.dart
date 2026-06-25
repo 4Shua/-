@@ -6,6 +6,8 @@ abstract final class AppDateUtils {
 
   static String formatMonthLabel(DateTime date) => '${date.month}月';
 
+  static String formatYearMonth(DateTime date) => '${date.year}年${date.month}月';
+
   static DateTime today() {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);

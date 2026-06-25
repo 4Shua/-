@@ -11,7 +11,19 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(habits, habits.reminderEnabled);
+            await m.addColumn(habits, habits.reminderTime);
+            await m.addColumn(habits, habits.checkInWindowStartMinutes);
+            await m.addColumn(habits, habits.checkInWindowEndMinutes);
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'dakaqi');

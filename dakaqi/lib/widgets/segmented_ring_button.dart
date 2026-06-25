@@ -18,7 +18,7 @@ class SegmentedRingButton extends StatefulWidget {
   final int segments;
   final int count;
   final Color color;
-  final VoidCallback? onTap;
+  final Future<bool> Function()? onTap;
   final bool enabled;
   final double size;
 
@@ -28,13 +28,41 @@ class SegmentedRingButton extends StatefulWidget {
 
 class _SegmentedRingButtonState extends State<SegmentedRingButton> {
   double _scale = 1;
+  int? _optimisticCount;
+
+  @override
+  void didUpdateWidget(SegmentedRingButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_optimisticCount != null && widget.count == _optimisticCount) {
+      _optimisticCount = null;
+    }
+  }
 
   Future<void> _handleTap() async {
-    if (!widget.enabled || widget.onTap == null) return;
+    if (widget.onTap == null) return;
 
-    setState(() => _scale = 0.88);
+    if (!widget.enabled) {
+      setState(() => _scale = 0.92);
+      HapticFeedback.selectionClick();
+      await widget.onTap!();
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      if (mounted) setState(() => _scale = 1);
+      return;
+    }
+
+    final n = widget.segments.clamp(1, 12);
+    final current = _optimisticCount ?? widget.count;
+    final next = current >= n ? 0 : current + 1;
+
+    setState(() {
+      _scale = 0.88;
+      _optimisticCount = next;
+    });
     HapticFeedback.lightImpact();
-    widget.onTap!();
+
+    final ok = await widget.onTap!();
+    if (!ok && mounted) setState(() => _optimisticCount = null);
+
     await Future<void>.delayed(const Duration(milliseconds: 80));
     if (mounted) setState(() => _scale = 1);
   }
@@ -42,11 +70,11 @@ class _SegmentedRingButtonState extends State<SegmentedRingButton> {
   @override
   Widget build(BuildContext context) {
     final n = widget.segments.clamp(1, 12);
-    final filled = widget.count.clamp(0, n);
+    final filled = (_optimisticCount ?? widget.count).clamp(0, n);
     final isFull = filled >= n;
 
     return GestureDetector(
-      onTap: widget.enabled ? _handleTap : null,
+      onTap: _handleTap,
       child: AnimatedScale(
         scale: _scale,
         duration: const Duration(milliseconds: 100),
@@ -97,41 +125,63 @@ class _SegmentedRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - _strokeWidth;
-    final segmentSweep = (2 * math.pi / segments) - _gapRadians;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final isComplete = filled >= segments;
 
-    // 内圈淡色底
     canvas.drawCircle(
       center,
       radius - _strokeWidth * 0.3,
       Paint()..color = color.withValues(alpha: enabled ? 0.12 : 0.06),
     );
 
+    if (isComplete) {
+      _drawArc(
+        canvas,
+        rect,
+        start: -math.pi / 2 + _gapRadians / 2,
+        sweep: 2 * math.pi - _gapRadians,
+        color: color.withValues(alpha: enabled ? 1.0 : 0.4),
+      );
+      return;
+    }
+
+    final segmentSweep = (2 * math.pi / segments) - _gapRadians;
+
     for (var i = 0; i < segments; i++) {
-      final start = -math.pi / 2 + i * (2 * math.pi / segments) + _gapRadians / 2;
+      final start =
+          -math.pi / 2 + i * (2 * math.pi / segments) + _gapRadians / 2;
       final isDone = i < filled;
 
-      final opacity = isDone
-          ? (0.55 + (i + 1) / segments * 0.45).clamp(0.55, 1.0)
-          : 1.0;
+      _drawArc(
+        canvas,
+        rect,
+        start: start,
+        sweep: segmentSweep,
+        color: isDone
+            ? color.withValues(alpha: enabled ? 0.92 : 0.38)
+            : (enabled ? const Color(0xFFE5E5EA) : const Color(0xFFF0F0F0)),
+      );
+    }
+  }
 
-      final paint = Paint()
+  void _drawArc(
+    Canvas canvas,
+    Rect rect, {
+    required double start,
+    required double sweep,
+    required Color color,
+  }) {
+    canvas.drawArc(
+      rect,
+      start,
+      sweep,
+      false,
+      Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = _strokeWidth
         ..strokeCap = StrokeCap.round
-        ..color = isDone
-            ? color.withValues(alpha: enabled ? opacity : opacity * 0.4)
-            : (enabled
-                ? const Color(0xFFE5E5EA)
-                : const Color(0xFFF0F0F0));
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        start,
-        segmentSweep,
-        false,
-        paint,
-      );
-    }
+        ..color = color,
+    );
   }
 
   @override

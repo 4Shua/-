@@ -1,4 +1,5 @@
 import 'package:dakaqi/core/constants/habit_assets.dart';
+import 'package:dakaqi/core/utils/time_utils.dart';
 import 'package:dakaqi/core/providers/database_provider.dart';
 import 'package:dakaqi/core/theme/app_theme.dart';
 import 'package:dakaqi/data/db/database.dart';
@@ -24,6 +25,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _tagController = TextEditingController();
+  final _completionsController = TextEditingController(text: '1');
 
   bool _loading = false;
   bool _saving = false;
@@ -35,6 +37,12 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   int _completions = 1;
   ActiveDaysType _activeDays = ActiveDaysType.everyDay;
   int? _selectedTagId;
+
+  bool _windowRestricted = false;
+  TimeOfDay _windowStart = const TimeOfDay(hour: 6, minute: 0);
+  TimeOfDay _windowEnd = const TimeOfDay(hour: 22, minute: 0);
+  bool _reminderEnabled = false;
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 21, minute: 0);
 
   @override
   void initState() {
@@ -63,9 +71,19 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       _colorHex = habit.colorHex;
       _frequency = habit.frequencyType;
       _completions = habit.completionsPerPeriod;
+      _completionsController.text = '${habit.completionsPerPeriod}';
       _activeDays = habit.activeDaysType;
       _selectedTagId = habit.tagId;
       if (tag != null) _tagController.text = tag.name;
+      _reminderEnabled = habit.reminderEnabled;
+      _reminderTime =
+          TimeUtils.parseTime(habit.reminderTime) ?? _reminderTime;
+      if (habit.checkInWindowStartMinutes != null &&
+          habit.checkInWindowEndMinutes != null) {
+        _windowRestricted = true;
+        _windowStart = TimeUtils.fromMinutes(habit.checkInWindowStartMinutes!);
+        _windowEnd = TimeUtils.fromMinutes(habit.checkInWindowEndMinutes!);
+      }
       _loading = false;
     });
   }
@@ -80,6 +98,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     }
 
     setState(() => _saving = true);
+    _normalizeCompletionsInput();
     final repo = ref.read(habitRepositoryProvider);
 
     int? tagId;
@@ -91,6 +110,11 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     }
 
     try {
+      final windowStart = _windowRestricted ? TimeUtils.toMinutes(_windowStart) : null;
+      final windowEnd = _windowRestricted ? TimeUtils.toMinutes(_windowEnd) : null;
+      final reminderTime =
+          _reminderEnabled ? TimeUtils.formatTimeOfDay(_reminderTime) : null;
+
       if (widget.isEditing) {
         await repo.updateHabit(
           id: widget.habitId!,
@@ -105,6 +129,10 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
           activeDaysType: _activeDays,
           tagId: tagId,
           clearTag: tagId == null,
+          reminderEnabled: _reminderEnabled,
+          reminderTime: reminderTime,
+          checkInWindowStartMinutes: windowStart,
+          checkInWindowEndMinutes: windowEnd,
         );
       } else {
         await repo.createHabit(
@@ -118,6 +146,10 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
           completionsPerPeriod: _completions,
           activeDaysType: _activeDays,
           tagId: tagId,
+          reminderEnabled: _reminderEnabled,
+          reminderTime: reminderTime,
+          checkInWindowStartMinutes: windowStart,
+          checkInWindowEndMinutes: windowEnd,
         );
       }
       if (mounted) Navigator.pop(context, true);
@@ -131,6 +163,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     _nameController.dispose();
     _descController.dispose();
     _tagController.dispose();
+    _completionsController.dispose();
     super.dispose();
   }
 
@@ -160,22 +193,12 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                   child: ListView(
                     padding: const EdgeInsets.all(AppSpacing.page),
                     children: [
-                      Center(
-                        child: Container(
-                          width: 88,
-                          height: 88,
-                          decoration: BoxDecoration(
-                            color: _themeColor.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            HabitIcons.resolve(_iconKey),
-                            size: 40,
-                            color: _themeColor,
-                          ),
-                        ),
+                      FloatingIconPicker(
+                        selectedKey: _iconKey,
+                        color: _themeColor,
+                        onSelected: (k) => setState(() => _iconKey = k),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       _fieldSection(
                         '名称',
                         TextField(
@@ -190,15 +213,6 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                           controller: _descController,
                           decoration: _inputDecoration('可选描述'),
                           maxLines: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _fieldSection(
-                        '图标',
-                        IconPickerGrid(
-                          selectedKey: _iconKey,
-                          color: _themeColor,
-                          onSelected: (k) => setState(() => _iconKey = k),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -325,46 +339,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                   const Text('周期',
                       style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
-                  SegmentedButton<FrequencyType>(
-                    segments: FrequencyType.values
-                        .map(
-                          (f) => ButtonSegment(
-                            value: f,
-                            label: Text(f.label),
-                          ),
-                        )
-                        .toList(),
-                    selected: {_frequency},
-                    onSelectionChanged: (s) =>
-                        setState(() => _frequency = s.first),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('每周期次数',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      IconButton.filledTonal(
-                        onPressed: _completions > 1
-                            ? () => setState(() => _completions--)
-                            : null,
-                        icon: const Icon(Icons.remove),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          '$_completions 次 / ${_frequency.label}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
-                      IconButton.filledTonal(
-                        onPressed: _completions < 20
-                            ? () => setState(() => _completions++)
-                            : null,
-                        icon: const Icon(Icons.add),
-                      ),
-                    ],
-                  ),
+                  _buildFrequencyRow(),
                   const SizedBox(height: 16),
                   const Text('打卡日',
                       style: TextStyle(fontWeight: FontWeight.w500)),
@@ -381,6 +356,10 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                       );
                     }).toList(),
                   ),
+                  const SizedBox(height: 16),
+                  _buildCheckInWindowSection(),
+                  const SizedBox(height: 16),
+                  _buildReminderSection(),
                   const SizedBox(height: 16),
                   const Text('类型（标签）',
                       style: TextStyle(fontWeight: FontWeight.w500)),
@@ -425,6 +404,321 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFrequencyRow() {
+    return Row(
+      children: [
+        _CompactCountStepper(
+          controller: _completionsController,
+          onDecrement: _completions > 1
+              ? () => _setCompletions(_completions - 1)
+              : null,
+          onIncrement: _completions < 20
+              ? () => _setCompletions(_completions + 1)
+              : null,
+          onChanged: (parsed) => setState(() => _completions = parsed),
+          onNormalize: _normalizeCompletionsInput,
+        ),
+        const SizedBox(width: 10),
+        const Text(
+          '次 /',
+          style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: AppColors.chipBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<FrequencyType>(
+                value: _frequency,
+                isExpanded: true,
+                icon: const Icon(Icons.expand_more, size: 20),
+                borderRadius: BorderRadius.circular(12),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: FrequencyType.daily,
+                    child: Text('天'),
+                  ),
+                  DropdownMenuItem(
+                    value: FrequencyType.weekly,
+                    child: Text('周'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => _frequency = value);
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _setCompletions(int value) {
+    final clamped = value.clamp(1, 20);
+    setState(() {
+      _completions = clamped;
+      _completionsController.text = '$clamped';
+    });
+  }
+
+  void _normalizeCompletionsInput() {
+    final parsed = int.tryParse(_completionsController.text.trim());
+    _setCompletions(parsed ?? _completions);
+  }
+
+  Widget _buildCheckInWindowSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                '时间范围',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+            Switch.adaptive(
+              value: _windowRestricted,
+              onChanged: (v) => setState(() => _windowRestricted = v),
+            ),
+          ],
+        ),
+        if (_windowRestricted) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _TimeBox(
+                  label: '开始',
+                  time: _windowStart,
+                  onTap: () async {
+                    final picked = await _pickTime(initial: _windowStart);
+                    if (picked != null) setState(() => _windowStart = picked);
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _TimeBox(
+                  label: '结束',
+                  time: _windowEnd,
+                  onTap: () async {
+                    final picked = await _pickTime(initial: _windowEnd);
+                    if (picked != null) setState(() => _windowEnd = picked);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildReminderSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                '打卡提醒',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+            Switch.adaptive(
+              value: _reminderEnabled,
+              onChanged: (v) => setState(() => _reminderEnabled = v),
+            ),
+          ],
+        ),
+        if (_reminderEnabled) ...[
+          const SizedBox(height: 8),
+          _TimeBox(
+            label: '提醒',
+            time: _reminderTime,
+            onTap: () async {
+              final picked = await _pickTime(initial: _reminderTime);
+              if (picked != null) setState(() => _reminderTime = picked);
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<TimeOfDay?> _pickTime({
+    required TimeOfDay initial,
+  }) async {
+    return showTimePicker(
+      context: context,
+      initialTime: initial,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+  }
+}
+
+class _TimeBox extends StatelessWidget {
+  const _TimeBox({
+    required this.label,
+    required this.time,
+    required this.onTap,
+  });
+
+  final String label;
+  final TimeOfDay time;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.chipBackground,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          child: Row(
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                TimeUtils.formatTimeOfDay(time),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactCountStepper extends StatelessWidget {
+  const _CompactCountStepper({
+    required this.controller,
+    required this.onDecrement,
+    required this.onIncrement,
+    required this.onChanged,
+    required this.onNormalize,
+  });
+
+  final TextEditingController controller;
+  final VoidCallback? onDecrement;
+  final VoidCallback? onIncrement;
+  final ValueChanged<int> onChanged;
+  final VoidCallback onNormalize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.chipBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StepperIconButton(icon: Icons.remove, onTap: onDecrement),
+          Container(
+            width: 1,
+            height: 22,
+            color: AppColors.textSecondary.withValues(alpha: 0.2),
+          ),
+          SizedBox(
+            width: 44,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (text) {
+                final parsed = int.tryParse(text.trim());
+                if (parsed != null && parsed >= 1 && parsed <= 20) {
+                  onChanged(parsed);
+                }
+              },
+              onSubmitted: (_) => onNormalize(),
+              onTapOutside: (_) => onNormalize(),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 22,
+            color: AppColors.textSecondary.withValues(alpha: 0.2),
+          ),
+          _StepperIconButton(icon: Icons.add, onTap: onIncrement),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepperIconButton extends StatelessWidget {
+  const _StepperIconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return SizedBox(
+      width: 40,
+      height: 44,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Icon(
+            icon,
+            size: 18,
+            color: enabled
+                ? AppColors.textPrimary
+                : AppColors.textSecondary.withValues(alpha: 0.35),
+          ),
+        ),
       ),
     );
   }

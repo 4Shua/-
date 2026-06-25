@@ -1,5 +1,7 @@
 import 'package:dakaqi/core/theme/app_theme.dart';
 import 'package:dakaqi/core/utils/date_utils.dart';
+import 'package:dakaqi/data/db/database.dart';
+import 'package:dakaqi/domain/rules/check_in_rules.dart';
 import 'package:flutter/material.dart';
 
 /// 只读月历：展示打卡记录，不可点击日期。
@@ -7,12 +9,14 @@ class ReadOnlyMonthCalendar extends StatelessWidget {
   const ReadOnlyMonthCalendar({
     super.key,
     required this.month,
+    required this.habit,
     required this.checkIns,
     required this.maxCount,
     required this.color,
   });
 
   final DateTime month;
+  final Habit habit;
   final Map<String, int> checkIns;
   final int maxCount;
   final Color color;
@@ -87,11 +91,18 @@ class ReadOnlyMonthCalendar extends StatelessWidget {
     final date = DateTime(month.year, month.month, dayNum);
     final key = AppDateUtils.formatDate(date);
     final count = checkIns[key] ?? 0;
+    final required = CheckInRules.canCheckInOn(habit, date);
     final isToday = date.year == today.year &&
         date.month == today.month &&
         date.day == today.day;
     final isFuture = date.isAfter(today);
     final ratio = maxCount > 0 ? (count / maxCount).clamp(0.0, 1.0) : 0.0;
+
+    final textColor = !required && !isFuture
+        ? AppColors.textSecondary.withValues(alpha: 0.35)
+        : isFuture
+            ? AppColors.textSecondary.withValues(alpha: 0.5)
+            : AppColors.textPrimary;
 
     return SizedBox(
       height: 44,
@@ -104,7 +115,9 @@ class ReadOnlyMonthCalendar extends StatelessWidget {
             decoration: BoxDecoration(
               color: count > 0
                   ? color.withValues(alpha: 0.12 + ratio * 0.35)
-                  : Colors.transparent,
+                  : required && !isFuture
+                      ? const Color(0xFFEBEBEF)
+                      : Colors.transparent,
               shape: BoxShape.circle,
               border: isToday
                   ? Border.all(color: AppColors.textPrimary, width: 1.5)
@@ -116,9 +129,7 @@ class ReadOnlyMonthCalendar extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                color: isFuture
-                    ? AppColors.textSecondary.withValues(alpha: 0.5)
-                    : AppColors.textPrimary,
+                color: textColor,
               ),
             ),
           ),
