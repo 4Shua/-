@@ -2,6 +2,7 @@ import 'package:dakaqi/core/theme/app_theme.dart';
 import 'package:dakaqi/data/db/database.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
 import 'package:dakaqi/features/habit_form/pages/habit_form_screen.dart';
+import 'package:dakaqi/features/settings/pages/settings_page.dart';
 import 'package:dakaqi/features/home/providers/habit_list_provider.dart';
 import 'package:dakaqi/features/home/widgets/habit_card.dart';
 import 'package:dakaqi/features/home/widgets/tag_filter_bar.dart';
@@ -24,7 +25,12 @@ class HomePage extends ConsumerWidget {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         leading: IconButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            );
+          },
           icon: const Icon(Icons.settings_outlined),
         ),
         actions: [

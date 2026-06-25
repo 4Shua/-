@@ -12,6 +12,12 @@ final heatmapDataProvider =
   return ref.watch(habitRepositoryProvider).watchCheckInMap(habitId);
 });
 
+final allCheckInsProvider =
+    StreamProvider.family<Map<String, int>, int>((ref, habitId) {
+  ref.watch(appBootstrapProvider);
+  return ref.watch(habitRepositoryProvider).watchAllCheckIns(habitId);
+});
+
 final checkInActionProvider = Provider((ref) {
   return CheckInAction(ref);
 });

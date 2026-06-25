@@ -63,6 +63,15 @@ class HabitRepository {
     });
   }
 
+  Stream<Map<String, int>> watchAllCheckIns(int habitId) {
+    final query = _db.select(_db.checkInRecords)
+      ..where((t) => t.habitId.equals(habitId));
+
+    return query.watch().map((records) {
+      return {for (final r in records) r.date: r.count};
+    });
+  }
+
   /// 点击打卡：未满则 +1，已满则重置为 0。
   /// 返回新的 count；若不允许打卡返回 -1。
   Future<int> tapCheckIn(Habit habit) async {

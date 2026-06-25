@@ -1,42 +1,33 @@
 # 开发进度
 
-> 最后更新：2025-06-24 | Phase 3 完成
+> 最后更新：2025-06-24 | Phase 4 完成（MVP 初版）
 
 ## 当前阶段
 
-**Phase 4 — 习惯详情浮层 + 打磨**
+**MVP 初版已完成 — 可选后续：rules-holiday / polish**
 
 ## 已完成
 
-- [x] Phase 0–2（规范、骨架、打卡核心）
-- [x] Phase 3：新建/编辑习惯表单
-  - `HabitFormScreen` 新建/编辑
-  - 图标网格、颜色选择、高级选项折叠
-  - 周期（每天/每周）、每周期 n 次、打卡日、类型标签
-  - 首页 + 跳转新建；点击卡片/热力图跳转编辑
+- [x] Phase 0–3
+- [x] Phase 4：习惯详情 + 设置
+  - `HabitDetailSheet` 浮层（DraggableScrollableSheet）
+  - `ReadOnlyMonthCalendar` 只读月历 + 月份切换
+  - 编辑按钮 → `HabitFormScreen`
+  - 点击卡片/热力图打开详情（圆环仍仅打卡）
+  - `SettingsPage` 极简设置页
 
-## 进行中
+## 下一步（可选）
 
-- [ ] Phase 4：详情浮层 + 月历 + 打磨
-
-## 下一步（AI 请从这里继续）
-
-1. 实现 `features/habit_detail/` 详情浮层（卡片悬浮样式）
-2. 只读月历 + 月份切换
-3. 编辑按钮跳转 `HabitFormScreen`
-4. 空状态、动画微调、Android 验收
+1. `CheckInRulesEngine` + 中国节假日离线数据
+2. UI 对照截图微调、Android 真机验收
+3. 数据导出/导入 JSON
 
 ## 环境备注
 
 - Flutter SDK：`D:\Flutter`
 - 远程：https://github.com/4Shua/-.git
 
-## 阻塞 / 待决策
-
-- 法定节假日规则待 rules-holiday 阶段
-
 ## 最近提交
 
+- 3cbb919 — docs(progress): 记录 Phase 3 提交哈希
 - 629d05d — feat(habit-form): Phase 3 新建编辑习惯表单
-- 8c047a0 — docs(progress): 记录 Phase 2 提交哈希
-- 5f08c0b — feat(home): Phase 2 分段圆环打卡与按月热力图

@@ -1,9 +1,9 @@
 import 'package:dakaqi/core/constants/habit_assets.dart';
 import 'package:dakaqi/core/theme/app_theme.dart';
+import 'package:dakaqi/core/utils/date_utils.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
 import 'package:dakaqi/domain/rules/check_in_rules.dart';
-import 'package:dakaqi/core/utils/date_utils.dart';
-import 'package:dakaqi/features/habit_form/pages/habit_form_screen.dart';
+import 'package:dakaqi/features/habit_detail/widgets/habit_detail_sheet.dart';
 import 'package:dakaqi/features/home/providers/check_in_provider.dart';
 import 'package:dakaqi/widgets/month_heatmap_row.dart';
 import 'package:dakaqi/widgets/segmented_ring_button.dart';
@@ -57,7 +57,7 @@ class HabitCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: InkWell(
-                    onTap: () => _openEdit(context, habitId),
+                    onTap: () => showHabitDetailSheet(context, item),
                     borderRadius: BorderRadius.circular(12),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +117,7 @@ class HabitCard extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: () => _openEdit(context, habitId),
+              onTap: () => showHabitDetailSheet(context, item),
               child: MonthHeatmapRow(
                 data: heatmap,
                 maxCount: habit.completionsPerPeriod,
@@ -126,15 +126,6 @@ class HabitCard extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Future<void> _openEdit(BuildContext context, int habitId) async {
-    await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HabitFormScreen(habitId: habitId),
       ),
     );
   }
