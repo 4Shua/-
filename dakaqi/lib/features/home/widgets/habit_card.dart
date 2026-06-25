@@ -1,9 +1,14 @@
 import 'package:dakaqi/core/theme/app_theme.dart';
-import 'package:dakaqi/data/db/database.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
+import 'package:dakaqi/domain/rules/check_in_rules.dart';
+import 'package:dakaqi/core/utils/date_utils.dart';
+import 'package:dakaqi/features/home/providers/check_in_provider.dart';
+import 'package:dakaqi/widgets/month_heatmap_row.dart';
+import 'package:dakaqi/widgets/segmented_ring_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HabitCard extends StatelessWidget {
+class HabitCard extends ConsumerWidget {
   const HabitCard({
     super.key,
     required this.item,
@@ -12,9 +17,21 @@ class HabitCard extends StatelessWidget {
   final HabitWithTag item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final habit = item.habit;
     final color = _parseColor(habit.colorHex);
+    final habitId = habit.id;
+
+    final todayCount = ref.watch(todayCheckInProvider(habitId)).maybeWhen(
+          data: (v) => v,
+          orElse: () => 0,
+        );
+    final heatmap = ref.watch(heatmapDataProvider(habitId)).maybeWhen(
+          data: (v) => v,
+          orElse: () => const <String, int>{},
+        );
+
+    final canCheckIn = CheckInRules.canCheckInOn(habit, AppDateUtils.today());
 
     return Container(
       decoration: BoxDecoration(
@@ -71,17 +88,41 @@ class HabitCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _CheckInPlaceholder(
-                color: color,
+              SegmentedRingButton(
                 segments: habit.completionsPerPeriod,
+                count: todayCount,
+                color: color,
+                enabled: canCheckIn,
+                onTap: () => _onCheckIn(context, ref, habitId),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _HeatmapPlaceholder(color: color),
+          MonthHeatmapRow(
+            data: heatmap,
+            maxCount: habit.completionsPerPeriod,
+            color: color,
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _onCheckIn(
+    BuildContext context,
+    WidgetRef ref,
+    int habitId,
+  ) async {
+    final result = await ref.read(checkInActionProvider).tap(habitId);
+    if (!context.mounted) return;
+    if (result == -1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('今天不在打卡日范围内'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Color _parseColor(String hex) {
@@ -95,52 +136,5 @@ class HabitCard extends StatelessWidget {
       'favorite' => Icons.favorite_border,
       _ => Icons.circle_outlined,
     };
-  }
-}
-
-class _CheckInPlaceholder extends StatelessWidget {
-  const _CheckInPlaceholder({
-    required this.color,
-    required this.segments,
-  });
-
-  final Color color;
-  final int segments;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color.withValues(alpha: 0.15),
-      ),
-      alignment: Alignment.center,
-      child: Icon(Icons.add, color: color, size: 28),
-    );
-  }
-}
-
-class _HeatmapPlaceholder extends StatelessWidget {
-  const _HeatmapPlaceholder({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.chipBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        '月热力图占位 · Phase 2',
-        style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 13),
-      ),
-    );
   }
 }

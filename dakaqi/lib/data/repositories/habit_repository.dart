@@ -1,6 +1,8 @@
+import 'package:dakaqi/core/utils/date_utils.dart';
 import 'package:dakaqi/data/db/database.dart';
 import 'package:dakaqi/domain/models/enums.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
+import 'package:dakaqi/domain/rules/check_in_rules.dart';
 import 'package:drift/drift.dart';
 
 class HabitRepository {
@@ -24,8 +26,84 @@ class HabitRepository {
   }
 
   Stream<List<Tag>> watchTags() {
-    return (_db.select(_db.tags)..orderBy([OrderingTerm.asc(_db.tags.name)]))
+    return (_db.select(_db.tags)
+          ..orderBy([(t) => OrderingTerm.asc(t.name)]))
         .watch();
+  }
+
+  Stream<int> watchTodayCount(int habitId) {
+    final date = AppDateUtils.formatDate(AppDateUtils.today());
+    final query = _db.select(_db.checkInRecords)
+      ..where(
+        (t) => t.habitId.equals(habitId) & t.date.equals(date),
+      );
+
+    return query.watchSingleOrNull().map((record) => record?.count ?? 0);
+  }
+
+  Stream<Map<String, int>> watchCheckInMap(
+    int habitId, {
+    int monthsBack = 6,
+  }) {
+    final today = AppDateUtils.today();
+    final start = AppDateUtils.monthsAgo(monthsBack - 1);
+    final startKey = AppDateUtils.formatDate(start);
+    final endKey = AppDateUtils.formatDate(today);
+
+    final query = _db.select(_db.checkInRecords)
+      ..where(
+        (t) =>
+            t.habitId.equals(habitId) &
+            t.date.isBiggerOrEqualValue(startKey) &
+            t.date.isSmallerOrEqualValue(endKey),
+      );
+
+    return query.watch().map((records) {
+      return {for (final r in records) r.date: r.count};
+    });
+  }
+
+  /// 点击打卡：未满则 +1，已满则重置为 0。
+  /// 返回新的 count；若不允许打卡返回 -1。
+  Future<int> tapCheckIn(Habit habit) async {
+    if (!CheckInRules.canCheckInOn(habit, AppDateUtils.today())) {
+      return -1;
+    }
+
+    final date = AppDateUtils.formatDate(AppDateUtils.today());
+    final n = habit.completionsPerPeriod;
+
+    return _db.transaction(() async {
+      final existing = await (_db.select(_db.checkInRecords)
+            ..where(
+              (t) => t.habitId.equals(habit.id) & t.date.equals(date),
+            ))
+          .getSingleOrNull();
+
+      final current = existing?.count ?? 0;
+      final next = current >= n ? 0 : current + 1;
+
+      if (existing == null) {
+        await _db.into(_db.checkInRecords).insert(
+              CheckInRecordsCompanion.insert(
+                habitId: habit.id,
+                date: date,
+                count: Value(next),
+              ),
+            );
+      } else {
+        await (_db.update(_db.checkInRecords)
+              ..where((t) => t.id.equals(existing.id)))
+            .write(
+          CheckInRecordsCompanion(
+            count: Value(next),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
+
+      return next;
+    });
   }
 
   Future<void> seedIfEmpty() async {
@@ -36,7 +114,7 @@ class HabitRepository {
           TagsCompanion.insert(name: 'piano', colorHex: const Value('#9B59B6')),
         );
 
-    await _db.into(_db.habits).insert(
+    final pianoId = await _db.into(_db.habits).insert(
           HabitsCompanion.insert(
             name: '练琴',
             description: const Value('每天必备练琴'),
@@ -50,7 +128,7 @@ class HabitRepository {
           ),
         );
 
-    await _db.into(_db.habits).insert(
+    final gegeId = await _db.into(_db.habits).insert(
           HabitsCompanion.insert(
             name: '哥哥',
             description: const Value('我想你了'),
@@ -62,5 +140,40 @@ class HabitRepository {
             sortOrder: const Value(1),
           ),
         );
+
+    await _seedDemoCheckIns(pianoId, gegeId);
+  }
+
+  Future<void> _seedDemoCheckIns(int pianoId, int gegeId) async {
+    final today = AppDateUtils.today();
+    final records = <CheckInRecordsCompanion>[];
+
+    for (var i = 30; i >= 0; i--) {
+      final date = today.subtract(Duration(days: i));
+      if (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday) {
+        continue;
+      }
+      final key = AppDateUtils.formatDate(date);
+      records.add(
+        CheckInRecordsCompanion.insert(
+          habitId: pianoId,
+          date: key,
+          count: const Value(1),
+        ),
+      );
+      if (i % 3 == 0) {
+        records.add(
+          CheckInRecordsCompanion.insert(
+            habitId: gegeId,
+            date: key,
+            count: Value(i % 9 == 0 ? 3 : (i % 3) + 1),
+          ),
+        );
+      }
+    }
+
+    for (final record in records) {
+      await _db.into(_db.checkInRecords).insert(record);
+    }
   }
 }

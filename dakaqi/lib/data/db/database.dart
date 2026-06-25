@@ -1,4 +1,5 @@
 import 'package:dakaqi/data/db/tables.dart';
+import 'package:dakaqi/domain/models/enums.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 

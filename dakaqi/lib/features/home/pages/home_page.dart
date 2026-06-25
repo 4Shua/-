@@ -1,4 +1,5 @@
 import 'package:dakaqi/core/theme/app_theme.dart';
+import 'package:dakaqi/data/db/database.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
 import 'package:dakaqi/features/home/providers/habit_list_provider.dart';
 import 'package:dakaqi/features/home/widgets/habit_card.dart';
@@ -38,8 +39,8 @@ class HomePage extends ConsumerWidget {
         data: (habits) {
           final filtered = _filterHabits(habits, selectedTagId);
           final tags = tagsAsync.maybeWhen(
-            data: (value) => value,
-            orElse: () => const [],
+            data: (List<Tag> value) => value,
+            orElse: () => const <Tag>[],
           );
 
           return ListView(
