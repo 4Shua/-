@@ -37,6 +37,7 @@
 
 ## 最近提交
 
+- 05a2f05 — fix(android): 修复真机构建 JVM 目标与 desugaring
 - 26bf7ff — feat(check-in): 打卡时间范围、提醒与日历视觉区分
 - c698dcb — feat(detail): Phase 4 习惯详情浮层与设置页
 - 629d05d — feat(habit-form): Phase 3 新建编辑习惯表单
