@@ -1,7 +1,9 @@
+import 'package:dakaqi/core/constants/habit_assets.dart';
 import 'package:dakaqi/core/theme/app_theme.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
 import 'package:dakaqi/domain/rules/check_in_rules.dart';
 import 'package:dakaqi/core/utils/date_utils.dart';
+import 'package:dakaqi/features/habit_form/pages/habit_form_screen.dart';
 import 'package:dakaqi/features/home/providers/check_in_provider.dart';
 import 'package:dakaqi/widgets/month_heatmap_row.dart';
 import 'package:dakaqi/widgets/segmented_ring_button.dart';
@@ -19,7 +21,7 @@ class HabitCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final habit = item.habit;
-    final color = _parseColor(habit.colorHex);
+    final color = HabitColors.parse(habit.colorHex);
     final habitId = habit.id;
 
     final todayCount = ref.watch(todayCheckInProvider(habitId)).maybeWhen(
@@ -45,65 +47,94 @@ class HabitCard extends ConsumerWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(_iconFromKey(habit.iconKey), color: color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      habit.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    if (habit.description case final desc? when desc.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          desc,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _openEdit(context, habitId),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            HabitIcons.resolve(habit.iconKey),
+                            color: color,
                           ),
                         ),
-                      ),
-                  ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                habit.name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              if (habit.description
+                                  case final desc? when desc.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    desc,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              SegmentedRingButton(
-                segments: habit.completionsPerPeriod,
-                count: todayCount,
+                SegmentedRingButton(
+                  segments: habit.completionsPerPeriod,
+                  count: todayCount,
+                  color: color,
+                  enabled: canCheckIn,
+                  onTap: () => _onCheckIn(context, ref, habitId),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => _openEdit(context, habitId),
+              child: MonthHeatmapRow(
+                data: heatmap,
+                maxCount: habit.completionsPerPeriod,
                 color: color,
-                enabled: canCheckIn,
-                onTap: () => _onCheckIn(context, ref, habitId),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          MonthHeatmapRow(
-            data: heatmap,
-            maxCount: habit.completionsPerPeriod,
-            color: color,
-          ),
-        ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openEdit(BuildContext context, int habitId) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HabitFormScreen(habitId: habitId),
       ),
     );
   }
@@ -123,18 +154,5 @@ class HabitCard extends ConsumerWidget {
         ),
       );
     }
-  }
-
-  Color _parseColor(String hex) {
-    final value = hex.replaceFirst('#', '');
-    return Color(int.parse('FF$value', radix: 16));
-  }
-
-  IconData _iconFromKey(String key) {
-    return switch (key) {
-      'piano' => Icons.piano,
-      'favorite' => Icons.favorite_border,
-      _ => Icons.circle_outlined,
-    };
   }
 }

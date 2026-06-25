@@ -176,4 +176,96 @@ class HabitRepository {
       await _db.into(_db.checkInRecords).insert(record);
     }
   }
+
+  Future<Habit?> getHabit(int id) {
+    return (_db.select(_db.habits)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<int> maxSortOrder() async {
+    final rows = await _db.select(_db.habits).get();
+    if (rows.isEmpty) return 0;
+    return rows.map((h) => h.sortOrder).reduce((a, b) => a > b ? a : b);
+  }
+
+  Future<int> createHabit({
+    required String name,
+    String? description,
+    required String iconKey,
+    required String colorHex,
+    required FrequencyType frequencyType,
+    required int completionsPerPeriod,
+    required ActiveDaysType activeDaysType,
+    int? tagId,
+  }) async {
+    final sortOrder = (await maxSortOrder()) + 1;
+    return _db.into(_db.habits).insert(
+          HabitsCompanion.insert(
+            name: name,
+            description: Value(description),
+            iconKey: iconKey,
+            colorHex: colorHex,
+            frequencyType: frequencyType,
+            completionsPerPeriod: Value(completionsPerPeriod.clamp(1, 20)),
+            activeDaysType: activeDaysType,
+            tagId: Value(tagId),
+            sortOrder: Value(sortOrder),
+          ),
+        );
+  }
+
+  Future<void> updateHabit({
+    required int id,
+    required String name,
+    String? description,
+    required String iconKey,
+    required String colorHex,
+    required FrequencyType frequencyType,
+    required int completionsPerPeriod,
+    required ActiveDaysType activeDaysType,
+    int? tagId,
+    bool clearTag = false,
+  }) async {
+    await (_db.update(_db.habits)..where((t) => t.id.equals(id))).write(
+          HabitsCompanion(
+            name: Value(name),
+            description: Value(description),
+            iconKey: Value(iconKey),
+            colorHex: Value(colorHex),
+            frequencyType: Value(frequencyType),
+            completionsPerPeriod: Value(completionsPerPeriod.clamp(1, 20)),
+            activeDaysType: Value(activeDaysType),
+            tagId: clearTag ? const Value(null) : Value(tagId),
+          ),
+        );
+  }
+
+  Future<Tag?> getTag(int id) {
+    return (_db.select(_db.tags)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<int?> findTagIdByName(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return null;
+    final tag = await (_db.select(_db.tags)
+          ..where((t) => t.name.equals(trimmed)))
+        .getSingleOrNull();
+    return tag?.id;
+  }
+
+  Future<int> createTag(String name) {
+    return _db.into(_db.tags).insert(
+          TagsCompanion.insert(name: name.trim()),
+        );
+  }
+
+  /// 按名称解析 tagId：空则 null；不存在则新建。
+  Future<int?> resolveTagId(String? tagName) async {
+    final trimmed = tagName?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    final existing = await findTagIdByName(trimmed);
+    if (existing != null) return existing;
+    return createTag(trimmed);
+  }
 }
