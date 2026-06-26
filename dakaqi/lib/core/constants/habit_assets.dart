@@ -81,18 +81,16 @@ abstract final class HabitColors {
   }
 }
 
-extension FrequencyTypeLabel on FrequencyType {
+extension EffectiveDayCategoryLabel on EffectiveDayCategory {
   String get label => switch (this) {
-        FrequencyType.daily => '每天',
-        FrequencyType.weekly => '每周',
+        EffectiveDayCategory.everyDay => '每天',
+        EffectiveDayCategory.weekdayWeekend => '周中/周末',
       };
 }
 
-extension ActiveDaysTypeLabel on ActiveDaysType {
-  String get label => switch (this) {
-        ActiveDaysType.everyDay => '每天',
-        ActiveDaysType.weekdays => '工作日',
-        ActiveDaysType.weekends => '周末',
-        ActiveDaysType.holidays => '法定节假日',
+extension EffectiveDayVariantLabel on EffectiveDayVariant {
+  String get shortLabel => switch (this) {
+        EffectiveDayVariant.weekday => '周中',
+        EffectiveDayVariant.weekend => '周末',
       };
 }

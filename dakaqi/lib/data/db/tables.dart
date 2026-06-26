@@ -13,10 +13,11 @@ class Habits extends Table {
   TextColumn get description => text().nullable()();
   TextColumn get iconKey => text()();
   TextColumn get colorHex => text()();
-  IntColumn get frequencyType => intEnum<FrequencyType>()();
-  IntColumn get completionsPerPeriod =>
-      integer().withDefault(const Constant(1))();
-  IntColumn get activeDaysType => intEnum<ActiveDaysType>()();
+  IntColumn get timesPerDay => integer().withDefault(const Constant(1))();
+  IntColumn get monthlyTarget => integer().withDefault(const Constant(20))();
+  IntColumn get effectiveDayCategory => intEnum<EffectiveDayCategory>()();
+  IntColumn get effectiveDayVariant =>
+      intEnum<EffectiveDayVariant>().withDefault(const Constant(0))();
   IntColumn get tagId => integer().nullable().references(Tags, #id)();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

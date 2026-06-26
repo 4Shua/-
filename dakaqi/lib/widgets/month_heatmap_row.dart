@@ -122,6 +122,8 @@ class _MonthColumn extends StatelessWidget {
                     color: color,
                     size: cellSize,
                     required: required,
+                    habit: habit,
+                    date: date,
                   ),
                 );
               }),
@@ -140,6 +142,8 @@ class _HeatCell extends StatelessWidget {
     required this.color,
     required this.size,
     required this.required,
+    required this.habit,
+    required this.date,
   });
 
   final int count;
@@ -147,9 +151,18 @@ class _HeatCell extends StatelessWidget {
   final Color color;
   final double size;
   final bool required;
+  final Habit habit;
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
+    final valid = CheckInRules.isValidCompletionDay(
+      habit,
+      date,
+      count,
+    );
+    final partial = required && count > 0 && !valid;
+
     if (!required && count == 0) {
       return Container(
         width: size,
@@ -164,7 +177,9 @@ class _HeatCell extends StatelessWidget {
     final ratio = maxCount > 0 ? (count / maxCount).clamp(0.0, 1.0) : 0.0;
     final bg = count == 0
         ? const Color(0xFFEBEBEF)
-        : color.withValues(alpha: 0.15 + ratio * 0.85);
+        : valid
+            ? color.withValues(alpha: 0.15 + ratio * 0.85)
+            : color.withValues(alpha: 0.08 + ratio * 0.35);
 
     return Container(
       width: size,
@@ -172,6 +187,9 @@ class _HeatCell extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(2.5),
+        border: partial
+            ? Border.all(color: color.withValues(alpha: 0.45), width: 0.8)
+            : null,
       ),
     );
   }

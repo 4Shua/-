@@ -62,8 +62,8 @@ class _HabitCardState extends ConsumerState<HabitCard> {
             widget.item.habit.checkInWindowStartMinutes ||
         oldWidget.item.habit.checkInWindowEndMinutes !=
             widget.item.habit.checkInWindowEndMinutes ||
-        oldWidget.item.habit.activeDaysType !=
-            widget.item.habit.activeDaysType) {
+        oldWidget.item.habit.effectiveDayCategory !=
+            widget.item.habit.effectiveDayCategory) {
       _startClockIfNeeded();
     }
   }
@@ -78,7 +78,7 @@ class _HabitCardState extends ConsumerState<HabitCard> {
     _clockTimer?.cancel();
     final habit = widget.item.habit;
     final needsClock = CheckInRules.hasCheckInWindow(habit) ||
-        habit.activeDaysType != ActiveDaysType.everyDay;
+        habit.effectiveDayCategory != EffectiveDayCategory.everyDay;
     if (!needsClock) return;
 
     _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -106,7 +106,8 @@ class _HabitCardState extends ConsumerState<HabitCard> {
     final canCheckIn = CheckInRules.canCheckInNow(habit, _now);
     final statusHint = CheckInRules.todayStatusHint(habit, _now);
     final showSchedule =
-        habit.activeDaysType != ActiveDaysType.everyDay && statusHint == null;
+        habit.effectiveDayCategory != EffectiveDayCategory.everyDay &&
+            statusHint == null;
 
     return Container(
       decoration: BoxDecoration(
@@ -187,7 +188,7 @@ class _HabitCardState extends ConsumerState<HabitCard> {
                                 Padding(
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
-                                    habit.activeDaysType.label,
+                                    CheckInRules.effectiveDaySummary(habit),
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
@@ -202,7 +203,7 @@ class _HabitCardState extends ConsumerState<HabitCard> {
                   ),
                 ),
                 SegmentedRingButton(
-                  segments: habit.completionsPerPeriod,
+                  segments: habit.timesPerDay,
                   count: todayCount,
                   color: color,
                   enabled: canCheckIn,
@@ -216,7 +217,7 @@ class _HabitCardState extends ConsumerState<HabitCard> {
               child: MonthHeatmapRow(
                 data: heatmap,
                 habit: habit,
-                maxCount: habit.completionsPerPeriod,
+                maxCount: habit.timesPerDay,
                 color: color,
               ),
             ),

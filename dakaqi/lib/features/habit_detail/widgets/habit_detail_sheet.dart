@@ -1,6 +1,7 @@
 import 'package:dakaqi/core/constants/habit_assets.dart';
 import 'package:dakaqi/core/theme/app_theme.dart';
 import 'package:dakaqi/core/utils/date_utils.dart';
+import 'package:dakaqi/domain/rules/check_in_rules.dart';
 import 'package:dakaqi/domain/models/habit_with_tag.dart';
 import 'package:dakaqi/features/habit_detail/widgets/read_only_month_calendar.dart';
 import 'package:dakaqi/features/habit_form/pages/habit_form_screen.dart';
@@ -68,6 +69,11 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
         );
 
     final monthLabel = AppDateUtils.formatYearMonth(_visibleMonth);
+    final validDays = CheckInRules.validDaysInVisibleMonth(
+      habit,
+      _visibleMonth,
+      checkIns,
+    );
 
     return DraggableScrollableSheet(
       initialChildSize: 0.72,
@@ -149,7 +155,7 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
               Row(
                 children: [
                   _MetaChip(
-                    label: habit.frequencyType.label,
+                    label: CheckInRules.frequencySummary(habit),
                     color: color,
                   ),
                   const Spacer(),
@@ -164,8 +170,19 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
                 month: _visibleMonth,
                 habit: habit,
                 checkIns: checkIns,
-                maxCount: habit.completionsPerPeriod,
+                maxCount: habit.timesPerDay,
                 color: color,
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: Text(
+                  '本月有效 $validDays / ${habit.monthlyTarget}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: color.withValues(alpha: 0.85),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               Row(

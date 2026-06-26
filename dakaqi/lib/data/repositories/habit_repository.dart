@@ -73,8 +73,6 @@ class HabitRepository {
     });
   }
 
-  /// 点击打卡：未满则 +1，已满则重置为 0。
-  /// 返回新的 count；-1 不在打卡日；-2 不在有效时间段。
   Future<int> tapCheckIn(Habit habit) async {
     final now = DateTime.now();
     if (!CheckInRules.canCheckInOn(habit, now)) {
@@ -85,7 +83,7 @@ class HabitRepository {
     }
 
     final date = AppDateUtils.formatDate(AppDateUtils.today());
-    final n = habit.completionsPerPeriod;
+    final n = habit.timesPerDay;
 
     return _db.transaction(() async {
       final existing = await (_db.select(_db.checkInRecords)
@@ -134,9 +132,9 @@ class HabitRepository {
             description: const Value('每天必备练琴'),
             iconKey: 'piano',
             colorHex: '#E74C3C',
-            frequencyType: FrequencyType.daily,
-            completionsPerPeriod: const Value(1),
-            activeDaysType: ActiveDaysType.everyDay,
+            timesPerDay: const Value(1),
+            monthlyTarget: const Value(20),
+            effectiveDayCategory: EffectiveDayCategory.everyDay,
             tagId: Value(pianoTagId),
             sortOrder: const Value(0),
           ),
@@ -148,9 +146,9 @@ class HabitRepository {
             description: const Value('我想你了'),
             iconKey: 'favorite',
             colorHex: '#3498DB',
-            frequencyType: FrequencyType.daily,
-            completionsPerPeriod: const Value(3),
-            activeDaysType: ActiveDaysType.everyDay,
+            timesPerDay: const Value(3),
+            monthlyTarget: const Value(20),
+            effectiveDayCategory: EffectiveDayCategory.everyDay,
             sortOrder: const Value(1),
           ),
         );
@@ -207,9 +205,10 @@ class HabitRepository {
     String? description,
     required String iconKey,
     required String colorHex,
-    required FrequencyType frequencyType,
-    required int completionsPerPeriod,
-    required ActiveDaysType activeDaysType,
+    required int timesPerDay,
+    required int monthlyTarget,
+    required EffectiveDayCategory effectiveDayCategory,
+    EffectiveDayVariant effectiveDayVariant = EffectiveDayVariant.weekday,
     int? tagId,
     bool reminderEnabled = false,
     String? reminderTime,
@@ -223,9 +222,10 @@ class HabitRepository {
             description: Value(description),
             iconKey: iconKey,
             colorHex: colorHex,
-            frequencyType: frequencyType,
-            completionsPerPeriod: Value(completionsPerPeriod.clamp(1, 20)),
-            activeDaysType: activeDaysType,
+            timesPerDay: Value(timesPerDay.clamp(1, 20)),
+            monthlyTarget: Value(monthlyTarget.clamp(1, 99)),
+            effectiveDayCategory: effectiveDayCategory,
+            effectiveDayVariant: Value(effectiveDayVariant),
             tagId: Value(tagId),
             sortOrder: Value(sortOrder),
             reminderEnabled: Value(reminderEnabled),
@@ -247,9 +247,10 @@ class HabitRepository {
     String? description,
     required String iconKey,
     required String colorHex,
-    required FrequencyType frequencyType,
-    required int completionsPerPeriod,
-    required ActiveDaysType activeDaysType,
+    required int timesPerDay,
+    required int monthlyTarget,
+    required EffectiveDayCategory effectiveDayCategory,
+    EffectiveDayVariant effectiveDayVariant = EffectiveDayVariant.weekday,
     int? tagId,
     bool clearTag = false,
     bool reminderEnabled = false,
@@ -263,9 +264,10 @@ class HabitRepository {
             description: Value(description),
             iconKey: Value(iconKey),
             colorHex: Value(colorHex),
-            frequencyType: Value(frequencyType),
-            completionsPerPeriod: Value(completionsPerPeriod.clamp(1, 20)),
-            activeDaysType: Value(activeDaysType),
+            timesPerDay: Value(timesPerDay.clamp(1, 20)),
+            monthlyTarget: Value(monthlyTarget.clamp(1, 99)),
+            effectiveDayCategory: Value(effectiveDayCategory),
+            effectiveDayVariant: Value(effectiveDayVariant),
             tagId: clearTag ? const Value(null) : Value(tagId),
             reminderEnabled: Value(reminderEnabled),
             reminderTime: Value(reminderTime),
@@ -301,7 +303,6 @@ class HabitRepository {
         );
   }
 
-  /// 按名称解析 tagId：空则 null；不存在则新建。
   Future<int?> resolveTagId(String? tagName) async {
     final trimmed = tagName?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;

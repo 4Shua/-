@@ -1,17 +1,20 @@
 import 'package:dakaqi/core/constants/habit_assets.dart';
+import 'package:dakaqi/core/utils/date_utils.dart';
 import 'package:dakaqi/core/utils/time_utils.dart';
 import 'package:dakaqi/data/db/database.dart';
 import 'package:dakaqi/domain/models/enums.dart';
 
 abstract final class CheckInRules {
   static bool canCheckInOn(Habit habit, DateTime date) {
-    return switch (habit.activeDaysType) {
-      ActiveDaysType.everyDay => true,
-      ActiveDaysType.weekdays =>
-        date.weekday >= DateTime.monday && date.weekday <= DateTime.friday,
-      ActiveDaysType.weekends =>
-        date.weekday == DateTime.saturday || date.weekday == DateTime.sunday,
-      ActiveDaysType.holidays => false, // Phase rules-holiday 接入节假日表
+    return switch (habit.effectiveDayCategory) {
+      EffectiveDayCategory.everyDay => true,
+      EffectiveDayCategory.weekdayWeekend =>
+        switch (habit.effectiveDayVariant) {
+          EffectiveDayVariant.weekday =>
+            date.weekday >= DateTime.monday && date.weekday <= DateTime.friday,
+          EffectiveDayVariant.weekend =>
+            date.weekday == DateTime.saturday || date.weekday == DateTime.sunday,
+        },
     };
   }
 
@@ -19,7 +22,6 @@ abstract final class CheckInRules {
       habit.checkInWindowStartMinutes != null &&
       habit.checkInWindowEndMinutes != null;
 
-  /// 综合打卡日 + 有效时间段（未设置时间段则视为全天）。
   static bool canCheckInNow(Habit habit, DateTime moment) {
     if (!canCheckInOn(habit, moment)) return false;
     return TimeUtils.isWithinWindow(
@@ -37,18 +39,55 @@ abstract final class CheckInRules {
     );
   }
 
-  /// 点击圆环被拦截时的提示文案。
+  /// 当日是否打满频率（计入月度有效次数）。
+  static bool isValidCompletionDay(Habit habit, DateTime date, int count) {
+    if (!canCheckInOn(habit, date)) return false;
+    return count >= habit.timesPerDay;
+  }
+
+  static int validDaysInMonth(
+    Habit habit,
+    int year,
+    int month,
+    Map<String, int> checkIns,
+  ) {
+    final days = AppDateUtils.daysInMonth(DateTime(year, month));
+    var total = 0;
+    for (var day = 1; day <= days; day++) {
+      final date = DateTime(year, month, day);
+      final key = AppDateUtils.formatDate(date);
+      final count = checkIns[key] ?? 0;
+      if (isValidCompletionDay(habit, date, count)) total++;
+    }
+    return total;
+  }
+
+  static int validDaysInVisibleMonth(
+    Habit habit,
+    DateTime month,
+    Map<String, int> checkIns,
+  ) {
+    return validDaysInMonth(habit, month.year, month.month, checkIns);
+  }
+
+  static String effectiveDaySummary(Habit habit) {
+    return switch (habit.effectiveDayCategory) {
+      EffectiveDayCategory.everyDay => '每天',
+      EffectiveDayCategory.weekdayWeekend =>
+        habit.effectiveDayVariant.shortLabel,
+    };
+  }
+
   static String blockedMessage(Habit habit, DateTime moment) {
     if (!canCheckInOn(habit, moment)) {
-      return '今日无需打卡（${habit.activeDaysType.label}）';
+      return '今日无需打卡（${effectiveDaySummary(habit)}）';
     }
     if (hasCheckInWindow(habit) && !isWithinTimeWindow(habit, moment)) {
-      return '当前不在时间范围内（${TimeUtils.formatWindow(habit.checkInWindowStartMinutes, habit.checkInWindowEndMinutes)}）';
+      return '当前不在有效打卡时间内（${TimeUtils.formatWindow(habit.checkInWindowStartMinutes, habit.checkInWindowEndMinutes)}）';
     }
     return '当前无法打卡';
   }
 
-  /// 卡片副标题：今日状态（极简一行，null 则不显示）。
   static String? todayStatusHint(Habit habit, DateTime moment) {
     if (!canCheckInOn(habit, moment)) return '今日无需打卡';
     if (hasCheckInWindow(habit) && !isWithinTimeWindow(habit, moment)) {
@@ -59,4 +98,7 @@ abstract final class CheckInRules {
     }
     return null;
   }
+
+  static String frequencySummary(Habit habit) =>
+      '${habit.timesPerDay}次/天 · ${habit.monthlyTarget}次/月';
 }

@@ -25,7 +25,8 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _tagController = TextEditingController();
-  final _completionsController = TextEditingController(text: '1');
+  final _timesPerDayController = TextEditingController(text: '1');
+  final _monthlyTargetController = TextEditingController(text: '20');
 
   bool _loading = false;
   bool _saving = false;
@@ -33,9 +34,10 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
 
   String _iconKey = HabitIcons.defaultKey;
   String _colorHex = HabitColors.defaultHex;
-  FrequencyType _frequency = FrequencyType.daily;
-  int _completions = 1;
-  ActiveDaysType _activeDays = ActiveDaysType.everyDay;
+  int _timesPerDay = 1;
+  int _monthlyTarget = 20;
+  EffectiveDayCategory _effectiveDayCategory = EffectiveDayCategory.everyDay;
+  EffectiveDayVariant _effectiveDayVariant = EffectiveDayVariant.weekday;
   int? _selectedTagId;
 
   bool _windowRestricted = false;
@@ -69,10 +71,12 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       _descController.text = habit.description ?? '';
       _iconKey = habit.iconKey;
       _colorHex = habit.colorHex;
-      _frequency = habit.frequencyType;
-      _completions = habit.completionsPerPeriod;
-      _completionsController.text = '${habit.completionsPerPeriod}';
-      _activeDays = habit.activeDaysType;
+      _timesPerDay = habit.timesPerDay;
+      _timesPerDayController.text = '${habit.timesPerDay}';
+      _monthlyTarget = habit.monthlyTarget;
+      _monthlyTargetController.text = '${habit.monthlyTarget}';
+      _effectiveDayCategory = habit.effectiveDayCategory;
+      _effectiveDayVariant = habit.effectiveDayVariant;
       _selectedTagId = habit.tagId;
       if (tag != null) _tagController.text = tag.name;
       _reminderEnabled = habit.reminderEnabled;
@@ -98,7 +102,8 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     }
 
     setState(() => _saving = true);
-    _normalizeCompletionsInput();
+    _normalizeTimesPerDayInput();
+    _normalizeMonthlyTargetInput();
     final repo = ref.read(habitRepositoryProvider);
 
     int? tagId;
@@ -124,9 +129,10 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
               : _descController.text.trim(),
           iconKey: _iconKey,
           colorHex: _colorHex,
-          frequencyType: _frequency,
-          completionsPerPeriod: _completions,
-          activeDaysType: _activeDays,
+          timesPerDay: _timesPerDay,
+          monthlyTarget: _monthlyTarget,
+          effectiveDayCategory: _effectiveDayCategory,
+          effectiveDayVariant: _effectiveDayVariant,
           tagId: tagId,
           clearTag: tagId == null,
           reminderEnabled: _reminderEnabled,
@@ -142,9 +148,10 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
               : _descController.text.trim(),
           iconKey: _iconKey,
           colorHex: _colorHex,
-          frequencyType: _frequency,
-          completionsPerPeriod: _completions,
-          activeDaysType: _activeDays,
+          timesPerDay: _timesPerDay,
+          monthlyTarget: _monthlyTarget,
+          effectiveDayCategory: _effectiveDayCategory,
+          effectiveDayVariant: _effectiveDayVariant,
           tagId: tagId,
           reminderEnabled: _reminderEnabled,
           reminderTime: reminderTime,
@@ -163,7 +170,8 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     _nameController.dispose();
     _descController.dispose();
     _tagController.dispose();
-    _completionsController.dispose();
+    _timesPerDayController.dispose();
+    _monthlyTargetController.dispose();
     super.dispose();
   }
 
@@ -336,26 +344,20 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('周期',
+                  const Text('频率',
                       style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
-                  _buildFrequencyRow(),
+                  _buildTimesPerDayRow(),
                   const SizedBox(height: 16),
-                  const Text('打卡日',
+                  const Text('目标',
                       style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: ActiveDaysType.values.map((type) {
-                      return ChoiceChip(
-                        label: Text(type.label),
-                        selected: _activeDays == type,
-                        onSelected: (_) =>
-                            setState(() => _activeDays = type),
-                      );
-                    }).toList(),
-                  ),
+                  _buildMonthlyTargetRow(),
+                  const SizedBox(height: 16),
+                  const Text('有效打卡日',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  _buildEffectiveDaySelector(),
                   const SizedBox(height: 16),
                   _buildCheckInWindowSection(),
                   const SizedBox(height: 16),
@@ -408,57 +410,137 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     );
   }
 
-  Widget _buildFrequencyRow() {
+  Widget _buildTimesPerDayRow() {
     return Row(
       children: [
         _CompactCountStepper(
-          controller: _completionsController,
-          onDecrement: _completions > 1
-              ? () => _setCompletions(_completions - 1)
+          controller: _timesPerDayController,
+          onDecrement: _timesPerDay > 1
+              ? () => _setTimesPerDay(_timesPerDay - 1)
               : null,
-          onIncrement: _completions < 20
-              ? () => _setCompletions(_completions + 1)
+          onIncrement: _timesPerDay < 20
+              ? () => _setTimesPerDay(_timesPerDay + 1)
               : null,
-          onChanged: (parsed) => setState(() => _completions = parsed),
-          onNormalize: _normalizeCompletionsInput,
+          onChanged: (parsed) => setState(() => _timesPerDay = parsed),
+          onNormalize: _normalizeTimesPerDayInput,
+          maxValue: 20,
         ),
         const SizedBox(width: 10),
         const Text(
-          '次 /',
+          '次 / 天',
           style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthlyTargetRow() {
+    return Row(
+      children: [
+        _CompactCountStepper(
+          controller: _monthlyTargetController,
+          onDecrement: _monthlyTarget > 1
+              ? () => _setMonthlyTarget(_monthlyTarget - 1)
+              : null,
+          onIncrement: _monthlyTarget < 99
+              ? () => _setMonthlyTarget(_monthlyTarget + 1)
+              : null,
+          onChanged: (parsed) => setState(() => _monthlyTarget = parsed),
+          onNormalize: _normalizeMonthlyTargetInput,
+          maxValue: 99,
+        ),
+        const SizedBox(width: 10),
+        const Text(
+          '次 / 月',
+          style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEffectiveDaySelector() {
+    final color = _themeColor;
+    return Row(
+      children: [
+        ChoiceChip(
+          label: const Text('每天'),
+          selected: _effectiveDayCategory == EffectiveDayCategory.everyDay,
+          onSelected: (_) => setState(
+            () => _effectiveDayCategory = EffectiveDayCategory.everyDay,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Container(
-            height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: AppColors.chipBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<FrequencyType>(
-                value: _frequency,
-                isExpanded: true,
-                icon: const Icon(Icons.expand_more, size: 20),
-                borderRadius: BorderRadius.circular(12),
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textPrimary,
+          child: Material(
+            color: _effectiveDayCategory == EffectiveDayCategory.weekdayWeekend
+                ? color.withValues(alpha: 0.14)
+                : AppColors.chipBackground,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                setState(() {
+                  if (_effectiveDayCategory ==
+                      EffectiveDayCategory.weekdayWeekend) {
+                    _effectiveDayVariant =
+                        _effectiveDayVariant == EffectiveDayVariant.weekday
+                            ? EffectiveDayVariant.weekend
+                            : EffectiveDayVariant.weekday;
+                  } else {
+                    _effectiveDayCategory =
+                        EffectiveDayCategory.weekdayWeekend;
+                  }
+                });
+              },
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '周中',
+                      style: TextStyle(
+                        fontWeight: _effectiveDayCategory ==
+                                    EffectiveDayCategory.weekdayWeekend &&
+                                _effectiveDayVariant ==
+                                    EffectiveDayVariant.weekday
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: _effectiveDayCategory ==
+                                EffectiveDayCategory.weekdayWeekend
+                            ? color
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(
+                        Icons.swap_horiz,
+                        size: 16,
+                        color: _effectiveDayCategory ==
+                                EffectiveDayCategory.weekdayWeekend
+                            ? color.withValues(alpha: 0.8)
+                            : AppColors.textSecondary.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    Text(
+                      '周末',
+                      style: TextStyle(
+                        fontWeight: _effectiveDayCategory ==
+                                    EffectiveDayCategory.weekdayWeekend &&
+                                _effectiveDayVariant ==
+                                    EffectiveDayVariant.weekend
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: _effectiveDayCategory ==
+                                EffectiveDayCategory.weekdayWeekend
+                            ? color
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: FrequencyType.daily,
-                    child: Text('天'),
-                  ),
-                  DropdownMenuItem(
-                    value: FrequencyType.weekly,
-                    child: Text('周'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) setState(() => _frequency = value);
-                },
               ),
             ),
           ),
@@ -467,17 +549,30 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     );
   }
 
-  void _setCompletions(int value) {
+  void _setTimesPerDay(int value) {
     final clamped = value.clamp(1, 20);
     setState(() {
-      _completions = clamped;
-      _completionsController.text = '$clamped';
+      _timesPerDay = clamped;
+      _timesPerDayController.text = '$clamped';
     });
   }
 
-  void _normalizeCompletionsInput() {
-    final parsed = int.tryParse(_completionsController.text.trim());
-    _setCompletions(parsed ?? _completions);
+  void _normalizeTimesPerDayInput() {
+    final parsed = int.tryParse(_timesPerDayController.text.trim());
+    _setTimesPerDay(parsed ?? _timesPerDay);
+  }
+
+  void _setMonthlyTarget(int value) {
+    final clamped = value.clamp(1, 99);
+    setState(() {
+      _monthlyTarget = clamped;
+      _monthlyTargetController.text = '$clamped';
+    });
+  }
+
+  void _normalizeMonthlyTargetInput() {
+    final parsed = int.tryParse(_monthlyTargetController.text.trim());
+    _setMonthlyTarget(parsed ?? _monthlyTarget);
   }
 
   Widget _buildCheckInWindowSection() {
@@ -488,7 +583,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
           children: [
             const Expanded(
               child: Text(
-                '时间范围',
+                '有效打卡时间',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
@@ -632,6 +727,7 @@ class _CompactCountStepper extends StatelessWidget {
     required this.onIncrement,
     required this.onChanged,
     required this.onNormalize,
+    this.maxValue = 20,
   });
 
   final TextEditingController controller;
@@ -639,6 +735,7 @@ class _CompactCountStepper extends StatelessWidget {
   final VoidCallback? onIncrement;
   final ValueChanged<int> onChanged;
   final VoidCallback onNormalize;
+  final int maxValue;
 
   @override
   Widget build(BuildContext context) {
@@ -674,7 +771,7 @@ class _CompactCountStepper extends StatelessWidget {
               ),
               onChanged: (text) {
                 final parsed = int.tryParse(text.trim());
-                if (parsed != null && parsed >= 1 && parsed <= 20) {
+                if (parsed != null && parsed >= 1 && parsed <= maxValue) {
                   onChanged(parsed);
                 }
               },

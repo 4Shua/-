@@ -96,6 +96,8 @@ class ReadOnlyMonthCalendar extends StatelessWidget {
         date.month == today.month &&
         date.day == today.day;
     final isFuture = date.isAfter(today);
+    final valid = CheckInRules.isValidCompletionDay(habit, date, count);
+    final partial = required && count > 0 && !valid;
     final ratio = maxCount > 0 ? (count / maxCount).clamp(0.0, 1.0) : 0.0;
 
     final textColor = !required && !isFuture
@@ -113,15 +115,19 @@ class ReadOnlyMonthCalendar extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: count > 0
+              color: valid
                   ? color.withValues(alpha: 0.12 + ratio * 0.35)
-                  : required && !isFuture
-                      ? const Color(0xFFEBEBEF)
-                      : Colors.transparent,
+                  : partial
+                      ? color.withValues(alpha: 0.08 + ratio * 0.18)
+                      : required && !isFuture
+                          ? const Color(0xFFEBEBEF)
+                          : Colors.transparent,
               shape: BoxShape.circle,
               border: isToday
                   ? Border.all(color: AppColors.textPrimary, width: 1.5)
-                  : null,
+                  : partial
+                      ? Border.all(color: color.withValues(alpha: 0.45))
+                      : null,
             ),
             alignment: Alignment.center,
             child: Text(
@@ -133,7 +139,24 @@ class ReadOnlyMonthCalendar extends StatelessWidget {
               ),
             ),
           ),
-          if (count > 0) ...[
+          if (count > 0 && !valid) ...[
+            const SizedBox(height: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                count.clamp(1, maxCount),
+                (_) => Container(
+                  width: 4,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(horizontal: 1),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.55),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ] else if (valid) ...[
             const SizedBox(height: 2),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

@@ -1,11 +1,9 @@
-enum FrequencyType {
-  daily,
-  weekly,
+enum EffectiveDayCategory {
+  everyDay,
+  weekdayWeekend,
 }
 
-enum ActiveDaysType {
-  everyDay,
-  weekdays,
-  weekends,
-  holidays,
+enum EffectiveDayVariant {
+  weekday,
+  weekend,
 }
