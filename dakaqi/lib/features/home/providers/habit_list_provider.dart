@@ -20,5 +20,11 @@ class SelectedTagIdNotifier extends Notifier<int?> {
   @override
   int? build() => null;
 
-  void select(int? tagId) => state = tagId;
+  void select(int? tagId) {
+    if (tagId != null && state == tagId) {
+      state = null;
+      return;
+    }
+    state = tagId;
+  }
 }

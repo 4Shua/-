@@ -1,9 +1,5 @@
-enum EffectiveDayCategory {
-  everyDay,
-  weekdayWeekend,
-}
-
-enum EffectiveDayVariant {
+enum EffectiveDayMode {
   weekday,
   weekend,
+  anyDay,
 }

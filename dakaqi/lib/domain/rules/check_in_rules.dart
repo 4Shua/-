@@ -6,15 +6,12 @@ import 'package:dakaqi/domain/models/enums.dart';
 
 abstract final class CheckInRules {
   static bool canCheckInOn(Habit habit, DateTime date) {
-    return switch (habit.effectiveDayCategory) {
-      EffectiveDayCategory.everyDay => true,
-      EffectiveDayCategory.weekdayWeekend =>
-        switch (habit.effectiveDayVariant) {
-          EffectiveDayVariant.weekday =>
-            date.weekday >= DateTime.monday && date.weekday <= DateTime.friday,
-          EffectiveDayVariant.weekend =>
-            date.weekday == DateTime.saturday || date.weekday == DateTime.sunday,
-        },
+    return switch (habit.effectiveDayMode) {
+      EffectiveDayMode.weekday =>
+        date.weekday >= DateTime.monday && date.weekday <= DateTime.friday,
+      EffectiveDayMode.weekend =>
+        date.weekday == DateTime.saturday || date.weekday == DateTime.sunday,
+      EffectiveDayMode.anyDay => true,
     };
   }
 
@@ -39,7 +36,6 @@ abstract final class CheckInRules {
     );
   }
 
-  /// 当日是否打满频率（计入月度有效次数）。
   static bool isValidCompletionDay(Habit habit, DateTime date, int count) {
     if (!canCheckInOn(habit, date)) return false;
     return count >= habit.timesPerDay;
@@ -70,13 +66,7 @@ abstract final class CheckInRules {
     return validDaysInMonth(habit, month.year, month.month, checkIns);
   }
 
-  static String effectiveDaySummary(Habit habit) {
-    return switch (habit.effectiveDayCategory) {
-      EffectiveDayCategory.everyDay => '每天',
-      EffectiveDayCategory.weekdayWeekend =>
-        habit.effectiveDayVariant.shortLabel,
-    };
-  }
+  static String effectiveDaySummary(Habit habit) => habit.effectiveDayMode.label;
 
   static String blockedMessage(Habit habit, DateTime moment) {
     if (!canCheckInOn(habit, moment)) {
@@ -100,5 +90,5 @@ abstract final class CheckInRules {
   }
 
   static String frequencySummary(Habit habit) =>
-      '${habit.timesPerDay}次/天 · ${habit.monthlyTarget}次/月';
+      '${habit.timesPerDay}/天 · ${habit.monthlyTarget}/月';
 }

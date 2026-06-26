@@ -62,8 +62,8 @@ class _HabitCardState extends ConsumerState<HabitCard> {
             widget.item.habit.checkInWindowStartMinutes ||
         oldWidget.item.habit.checkInWindowEndMinutes !=
             widget.item.habit.checkInWindowEndMinutes ||
-        oldWidget.item.habit.effectiveDayCategory !=
-            widget.item.habit.effectiveDayCategory) {
+        oldWidget.item.habit.effectiveDayMode !=
+            widget.item.habit.effectiveDayMode) {
       _startClockIfNeeded();
     }
   }
@@ -78,7 +78,7 @@ class _HabitCardState extends ConsumerState<HabitCard> {
     _clockTimer?.cancel();
     final habit = widget.item.habit;
     final needsClock = CheckInRules.hasCheckInWindow(habit) ||
-        habit.effectiveDayCategory != EffectiveDayCategory.everyDay;
+        habit.effectiveDayMode != EffectiveDayMode.anyDay;
     if (!needsClock) return;
 
     _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -106,8 +106,7 @@ class _HabitCardState extends ConsumerState<HabitCard> {
     final canCheckIn = CheckInRules.canCheckInNow(habit, _now);
     final statusHint = CheckInRules.todayStatusHint(habit, _now);
     final showSchedule =
-        habit.effectiveDayCategory != EffectiveDayCategory.everyDay &&
-            statusHint == null;
+        habit.effectiveDayMode != EffectiveDayMode.anyDay && statusHint == null;
 
     return Container(
       decoration: BoxDecoration(

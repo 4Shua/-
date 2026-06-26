@@ -22,17 +22,12 @@ class TagFilterBar extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _FilterChip(
-            label: '全部',
-            selected: selectedTagId == null,
-            onTap: () => onSelected(null),
-          ),
-          for (final tag in tags) ...[
-            const SizedBox(width: 8),
+          for (var i = 0; i < tags.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
             _FilterChip(
-              label: tag.name,
-              selected: selectedTagId == tag.id,
-              onTap: () => onSelected(tag.id),
+              label: tags[i].name,
+              selected: selectedTagId == tags[i].id,
+              onTap: () => onSelected(tags[i].id),
             ),
           ],
         ],

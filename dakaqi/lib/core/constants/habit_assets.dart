@@ -81,16 +81,10 @@ abstract final class HabitColors {
   }
 }
 
-extension EffectiveDayCategoryLabel on EffectiveDayCategory {
+extension EffectiveDayModeLabel on EffectiveDayMode {
   String get label => switch (this) {
-        EffectiveDayCategory.everyDay => '每天',
-        EffectiveDayCategory.weekdayWeekend => '周中/周末',
-      };
-}
-
-extension EffectiveDayVariantLabel on EffectiveDayVariant {
-  String get shortLabel => switch (this) {
-        EffectiveDayVariant.weekday => '周中',
-        EffectiveDayVariant.weekend => '周末',
+        EffectiveDayMode.weekday => '周中',
+        EffectiveDayMode.weekend => '周末',
+        EffectiveDayMode.anyDay => '管他周几',
       };
 }

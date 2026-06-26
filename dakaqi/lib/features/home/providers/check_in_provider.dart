@@ -22,6 +22,10 @@ final checkInActionProvider = Provider((ref) {
   return CheckInAction(ref);
 });
 
+final deleteHabitActionProvider = Provider((ref) {
+  return DeleteHabitAction(ref);
+});
+
 class CheckInAction {
   CheckInAction(this._ref);
 
@@ -32,5 +36,15 @@ class CheckInAction {
     final habits = await repo.watchHabitsWithTags().first;
     final habit = habits.firstWhere((h) => h.habit.id == habitId).habit;
     return repo.tapCheckIn(habit);
+  }
+}
+
+class DeleteHabitAction {
+  DeleteHabitAction(this._ref);
+
+  final Ref _ref;
+
+  Future<void> call(int habitId) async {
+    await _ref.read(habitRepositoryProvider).deleteHabit(habitId);
   }
 }

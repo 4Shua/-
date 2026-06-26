@@ -19,6 +19,5 @@ HabitRepository habitRepository(Ref ref) {
 @Riverpod(keepAlive: true)
 Future<void> appBootstrap(Ref ref) async {
   final repo = ref.watch(habitRepositoryProvider);
-  await repo.seedIfEmpty();
   await repo.rescheduleAllReminders();
 }

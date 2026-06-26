@@ -59,6 +59,35 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
     );
   }
 
+  Future<void> _confirmDelete() async {
+    final habit = widget.item.habit;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除习惯'),
+        content: Text('确定删除「${habit.name}」？打卡记录将无法恢复。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              '删除',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    await ref.read(deleteHabitActionProvider).call(habit.id);
+    if (!mounted) return;
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final habit = widget.item.habit;
@@ -160,6 +189,12 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
                   ),
                   const Spacer(),
                   _IconActionButton(
+                    icon: Icons.delete_outline,
+                    onTap: _confirmDelete,
+                    iconColor: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  _IconActionButton(
                     icon: Icons.edit_outlined,
                     onTap: _openEdit,
                   ),
@@ -176,7 +211,7 @@ class _HabitDetailSheetState extends ConsumerState<HabitDetailSheet> {
               const SizedBox(height: 12),
               Center(
                 child: Text(
-                  '本月有效 $validDays / ${habit.monthlyTarget}',
+                  '已完成 $validDays / ${habit.monthlyTarget}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -262,10 +297,15 @@ class _MetaChip extends StatelessWidget {
 }
 
 class _IconActionButton extends StatelessWidget {
-  const _IconActionButton({required this.icon, required this.onTap});
+  const _IconActionButton({
+    required this.icon,
+    required this.onTap,
+    this.iconColor = AppColors.textPrimary,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +318,7 @@ class _IconActionButton extends StatelessWidget {
         child: SizedBox(
           width: 44,
           height: 44,
-          child: Icon(icon, color: AppColors.textPrimary),
+          child: Icon(icon, color: iconColor),
         ),
       ),
     );

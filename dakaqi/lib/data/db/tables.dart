@@ -15,9 +15,7 @@ class Habits extends Table {
   TextColumn get colorHex => text()();
   IntColumn get timesPerDay => integer().withDefault(const Constant(1))();
   IntColumn get monthlyTarget => integer().withDefault(const Constant(20))();
-  IntColumn get effectiveDayCategory => intEnum<EffectiveDayCategory>()();
-  IntColumn get effectiveDayVariant =>
-      intEnum<EffectiveDayVariant>().withDefault(const Constant(0))();
+  IntColumn get effectiveDayMode => intEnum<EffectiveDayMode>()();
   IntColumn get tagId => integer().nullable().references(Tags, #id)();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

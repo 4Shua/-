@@ -336,30 +336,14 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     defaultValue: const Constant(20),
   );
   @override
-  late final GeneratedColumnWithTypeConverter<EffectiveDayCategory, int>
-  effectiveDayCategory =
-      GeneratedColumn<int>(
-        'effective_day_category',
-        aliasedName,
-        false,
-        type: DriftSqlType.int,
-        requiredDuringInsert: true,
-      ).withConverter<EffectiveDayCategory>(
-        $HabitsTable.$convertereffectiveDayCategory,
-      );
-  @override
-  late final GeneratedColumnWithTypeConverter<EffectiveDayVariant, int>
-  effectiveDayVariant =
-      GeneratedColumn<int>(
-        'effective_day_variant',
-        aliasedName,
-        false,
-        type: DriftSqlType.int,
-        requiredDuringInsert: false,
-        defaultValue: const Constant(0),
-      ).withConverter<EffectiveDayVariant>(
-        $HabitsTable.$convertereffectiveDayVariant,
-      );
+  late final GeneratedColumnWithTypeConverter<EffectiveDayMode, int>
+  effectiveDayMode = GeneratedColumn<int>(
+    'effective_day_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  ).withConverter<EffectiveDayMode>($HabitsTable.$convertereffectiveDayMode);
   static const VerificationMeta _tagIdMeta = const VerificationMeta('tagId');
   @override
   late final GeneratedColumn<int> tagId = GeneratedColumn<int>(
@@ -453,8 +437,7 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     colorHex,
     timesPerDay,
     monthlyTarget,
-    effectiveDayCategory,
-    effectiveDayVariant,
+    effectiveDayMode,
     tagId,
     sortOrder,
     createdAt,
@@ -620,16 +603,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         DriftSqlType.int,
         data['${effectivePrefix}monthly_target'],
       )!,
-      effectiveDayCategory: $HabitsTable.$convertereffectiveDayCategory.fromSql(
+      effectiveDayMode: $HabitsTable.$convertereffectiveDayMode.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.int,
-          data['${effectivePrefix}effective_day_category'],
-        )!,
-      ),
-      effectiveDayVariant: $HabitsTable.$convertereffectiveDayVariant.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.int,
-          data['${effectivePrefix}effective_day_variant'],
+          data['${effectivePrefix}effective_day_mode'],
         )!,
       ),
       tagId: attachedDatabase.typeMapping.read(
@@ -668,14 +645,9 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     return $HabitsTable(attachedDatabase, alias);
   }
 
-  static JsonTypeConverter2<EffectiveDayCategory, int, int>
-  $convertereffectiveDayCategory =
-      const EnumIndexConverter<EffectiveDayCategory>(
-        EffectiveDayCategory.values,
-      );
-  static JsonTypeConverter2<EffectiveDayVariant, int, int>
-  $convertereffectiveDayVariant = const EnumIndexConverter<EffectiveDayVariant>(
-    EffectiveDayVariant.values,
+  static JsonTypeConverter2<EffectiveDayMode, int, int>
+  $convertereffectiveDayMode = const EnumIndexConverter<EffectiveDayMode>(
+    EffectiveDayMode.values,
   );
 }
 
@@ -687,8 +659,7 @@ class Habit extends DataClass implements Insertable<Habit> {
   final String colorHex;
   final int timesPerDay;
   final int monthlyTarget;
-  final EffectiveDayCategory effectiveDayCategory;
-  final EffectiveDayVariant effectiveDayVariant;
+  final EffectiveDayMode effectiveDayMode;
   final int? tagId;
   final int sortOrder;
   final DateTime createdAt;
@@ -704,8 +675,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     required this.colorHex,
     required this.timesPerDay,
     required this.monthlyTarget,
-    required this.effectiveDayCategory,
-    required this.effectiveDayVariant,
+    required this.effectiveDayMode,
     this.tagId,
     required this.sortOrder,
     required this.createdAt,
@@ -727,13 +697,8 @@ class Habit extends DataClass implements Insertable<Habit> {
     map['times_per_day'] = Variable<int>(timesPerDay);
     map['monthly_target'] = Variable<int>(monthlyTarget);
     {
-      map['effective_day_category'] = Variable<int>(
-        $HabitsTable.$convertereffectiveDayCategory.toSql(effectiveDayCategory),
-      );
-    }
-    {
-      map['effective_day_variant'] = Variable<int>(
-        $HabitsTable.$convertereffectiveDayVariant.toSql(effectiveDayVariant),
+      map['effective_day_mode'] = Variable<int>(
+        $HabitsTable.$convertereffectiveDayMode.toSql(effectiveDayMode),
       );
     }
     if (!nullToAbsent || tagId != null) {
@@ -769,8 +734,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       colorHex: Value(colorHex),
       timesPerDay: Value(timesPerDay),
       monthlyTarget: Value(monthlyTarget),
-      effectiveDayCategory: Value(effectiveDayCategory),
-      effectiveDayVariant: Value(effectiveDayVariant),
+      effectiveDayMode: Value(effectiveDayMode),
       tagId: tagId == null && nullToAbsent
           ? const Value.absent()
           : Value(tagId),
@@ -803,10 +767,8 @@ class Habit extends DataClass implements Insertable<Habit> {
       colorHex: serializer.fromJson<String>(json['colorHex']),
       timesPerDay: serializer.fromJson<int>(json['timesPerDay']),
       monthlyTarget: serializer.fromJson<int>(json['monthlyTarget']),
-      effectiveDayCategory: $HabitsTable.$convertereffectiveDayCategory
-          .fromJson(serializer.fromJson<int>(json['effectiveDayCategory'])),
-      effectiveDayVariant: $HabitsTable.$convertereffectiveDayVariant.fromJson(
-        serializer.fromJson<int>(json['effectiveDayVariant']),
+      effectiveDayMode: $HabitsTable.$convertereffectiveDayMode.fromJson(
+        serializer.fromJson<int>(json['effectiveDayMode']),
       ),
       tagId: serializer.fromJson<int?>(json['tagId']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
@@ -832,13 +794,8 @@ class Habit extends DataClass implements Insertable<Habit> {
       'colorHex': serializer.toJson<String>(colorHex),
       'timesPerDay': serializer.toJson<int>(timesPerDay),
       'monthlyTarget': serializer.toJson<int>(monthlyTarget),
-      'effectiveDayCategory': serializer.toJson<int>(
-        $HabitsTable.$convertereffectiveDayCategory.toJson(
-          effectiveDayCategory,
-        ),
-      ),
-      'effectiveDayVariant': serializer.toJson<int>(
-        $HabitsTable.$convertereffectiveDayVariant.toJson(effectiveDayVariant),
+      'effectiveDayMode': serializer.toJson<int>(
+        $HabitsTable.$convertereffectiveDayMode.toJson(effectiveDayMode),
       ),
       'tagId': serializer.toJson<int?>(tagId),
       'sortOrder': serializer.toJson<int>(sortOrder),
@@ -862,8 +819,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     String? colorHex,
     int? timesPerDay,
     int? monthlyTarget,
-    EffectiveDayCategory? effectiveDayCategory,
-    EffectiveDayVariant? effectiveDayVariant,
+    EffectiveDayMode? effectiveDayMode,
     Value<int?> tagId = const Value.absent(),
     int? sortOrder,
     DateTime? createdAt,
@@ -879,8 +835,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     colorHex: colorHex ?? this.colorHex,
     timesPerDay: timesPerDay ?? this.timesPerDay,
     monthlyTarget: monthlyTarget ?? this.monthlyTarget,
-    effectiveDayCategory: effectiveDayCategory ?? this.effectiveDayCategory,
-    effectiveDayVariant: effectiveDayVariant ?? this.effectiveDayVariant,
+    effectiveDayMode: effectiveDayMode ?? this.effectiveDayMode,
     tagId: tagId.present ? tagId.value : this.tagId,
     sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
@@ -908,12 +863,9 @@ class Habit extends DataClass implements Insertable<Habit> {
       monthlyTarget: data.monthlyTarget.present
           ? data.monthlyTarget.value
           : this.monthlyTarget,
-      effectiveDayCategory: data.effectiveDayCategory.present
-          ? data.effectiveDayCategory.value
-          : this.effectiveDayCategory,
-      effectiveDayVariant: data.effectiveDayVariant.present
-          ? data.effectiveDayVariant.value
-          : this.effectiveDayVariant,
+      effectiveDayMode: data.effectiveDayMode.present
+          ? data.effectiveDayMode.value
+          : this.effectiveDayMode,
       tagId: data.tagId.present ? data.tagId.value : this.tagId,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -942,8 +894,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('colorHex: $colorHex, ')
           ..write('timesPerDay: $timesPerDay, ')
           ..write('monthlyTarget: $monthlyTarget, ')
-          ..write('effectiveDayCategory: $effectiveDayCategory, ')
-          ..write('effectiveDayVariant: $effectiveDayVariant, ')
+          ..write('effectiveDayMode: $effectiveDayMode, ')
           ..write('tagId: $tagId, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
@@ -964,8 +915,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     colorHex,
     timesPerDay,
     monthlyTarget,
-    effectiveDayCategory,
-    effectiveDayVariant,
+    effectiveDayMode,
     tagId,
     sortOrder,
     createdAt,
@@ -985,8 +935,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.colorHex == this.colorHex &&
           other.timesPerDay == this.timesPerDay &&
           other.monthlyTarget == this.monthlyTarget &&
-          other.effectiveDayCategory == this.effectiveDayCategory &&
-          other.effectiveDayVariant == this.effectiveDayVariant &&
+          other.effectiveDayMode == this.effectiveDayMode &&
           other.tagId == this.tagId &&
           other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
@@ -1004,8 +953,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<String> colorHex;
   final Value<int> timesPerDay;
   final Value<int> monthlyTarget;
-  final Value<EffectiveDayCategory> effectiveDayCategory;
-  final Value<EffectiveDayVariant> effectiveDayVariant;
+  final Value<EffectiveDayMode> effectiveDayMode;
   final Value<int?> tagId;
   final Value<int> sortOrder;
   final Value<DateTime> createdAt;
@@ -1021,8 +969,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.colorHex = const Value.absent(),
     this.timesPerDay = const Value.absent(),
     this.monthlyTarget = const Value.absent(),
-    this.effectiveDayCategory = const Value.absent(),
-    this.effectiveDayVariant = const Value.absent(),
+    this.effectiveDayMode = const Value.absent(),
     this.tagId = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1039,8 +986,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     required String colorHex,
     this.timesPerDay = const Value.absent(),
     this.monthlyTarget = const Value.absent(),
-    required EffectiveDayCategory effectiveDayCategory,
-    this.effectiveDayVariant = const Value.absent(),
+    required EffectiveDayMode effectiveDayMode,
     this.tagId = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1051,7 +997,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   }) : name = Value(name),
        iconKey = Value(iconKey),
        colorHex = Value(colorHex),
-       effectiveDayCategory = Value(effectiveDayCategory);
+       effectiveDayMode = Value(effectiveDayMode);
   static Insertable<Habit> custom({
     Expression<int>? id,
     Expression<String>? name,
@@ -1060,8 +1006,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<String>? colorHex,
     Expression<int>? timesPerDay,
     Expression<int>? monthlyTarget,
-    Expression<int>? effectiveDayCategory,
-    Expression<int>? effectiveDayVariant,
+    Expression<int>? effectiveDayMode,
     Expression<int>? tagId,
     Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
@@ -1078,10 +1023,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (colorHex != null) 'color_hex': colorHex,
       if (timesPerDay != null) 'times_per_day': timesPerDay,
       if (monthlyTarget != null) 'monthly_target': monthlyTarget,
-      if (effectiveDayCategory != null)
-        'effective_day_category': effectiveDayCategory,
-      if (effectiveDayVariant != null)
-        'effective_day_variant': effectiveDayVariant,
+      if (effectiveDayMode != null) 'effective_day_mode': effectiveDayMode,
       if (tagId != null) 'tag_id': tagId,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
@@ -1102,8 +1044,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Value<String>? colorHex,
     Value<int>? timesPerDay,
     Value<int>? monthlyTarget,
-    Value<EffectiveDayCategory>? effectiveDayCategory,
-    Value<EffectiveDayVariant>? effectiveDayVariant,
+    Value<EffectiveDayMode>? effectiveDayMode,
     Value<int?>? tagId,
     Value<int>? sortOrder,
     Value<DateTime>? createdAt,
@@ -1120,8 +1061,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       colorHex: colorHex ?? this.colorHex,
       timesPerDay: timesPerDay ?? this.timesPerDay,
       monthlyTarget: monthlyTarget ?? this.monthlyTarget,
-      effectiveDayCategory: effectiveDayCategory ?? this.effectiveDayCategory,
-      effectiveDayVariant: effectiveDayVariant ?? this.effectiveDayVariant,
+      effectiveDayMode: effectiveDayMode ?? this.effectiveDayMode,
       tagId: tagId ?? this.tagId,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
@@ -1158,18 +1098,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     if (monthlyTarget.present) {
       map['monthly_target'] = Variable<int>(monthlyTarget.value);
     }
-    if (effectiveDayCategory.present) {
-      map['effective_day_category'] = Variable<int>(
-        $HabitsTable.$convertereffectiveDayCategory.toSql(
-          effectiveDayCategory.value,
-        ),
-      );
-    }
-    if (effectiveDayVariant.present) {
-      map['effective_day_variant'] = Variable<int>(
-        $HabitsTable.$convertereffectiveDayVariant.toSql(
-          effectiveDayVariant.value,
-        ),
+    if (effectiveDayMode.present) {
+      map['effective_day_mode'] = Variable<int>(
+        $HabitsTable.$convertereffectiveDayMode.toSql(effectiveDayMode.value),
       );
     }
     if (tagId.present) {
@@ -1210,8 +1141,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('colorHex: $colorHex, ')
           ..write('timesPerDay: $timesPerDay, ')
           ..write('monthlyTarget: $monthlyTarget, ')
-          ..write('effectiveDayCategory: $effectiveDayCategory, ')
-          ..write('effectiveDayVariant: $effectiveDayVariant, ')
+          ..write('effectiveDayMode: $effectiveDayMode, ')
           ..write('tagId: $tagId, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
@@ -1835,8 +1765,7 @@ typedef $$HabitsTableCreateCompanionBuilder =
       required String colorHex,
       Value<int> timesPerDay,
       Value<int> monthlyTarget,
-      required EffectiveDayCategory effectiveDayCategory,
-      Value<EffectiveDayVariant> effectiveDayVariant,
+      required EffectiveDayMode effectiveDayMode,
       Value<int?> tagId,
       Value<int> sortOrder,
       Value<DateTime> createdAt,
@@ -1854,8 +1783,7 @@ typedef $$HabitsTableUpdateCompanionBuilder =
       Value<String> colorHex,
       Value<int> timesPerDay,
       Value<int> monthlyTarget,
-      Value<EffectiveDayCategory> effectiveDayCategory,
-      Value<EffectiveDayVariant> effectiveDayVariant,
+      Value<EffectiveDayMode> effectiveDayMode,
       Value<int?> tagId,
       Value<int> sortOrder,
       Value<DateTime> createdAt,
@@ -1949,19 +1877,9 @@ class $$HabitsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<
-    EffectiveDayCategory,
-    EffectiveDayCategory,
-    int
-  >
-  get effectiveDayCategory => $composableBuilder(
-    column: $table.effectiveDayCategory,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<EffectiveDayVariant, EffectiveDayVariant, int>
-  get effectiveDayVariant => $composableBuilder(
-    column: $table.effectiveDayVariant,
+  ColumnWithTypeConverterFilters<EffectiveDayMode, EffectiveDayMode, int>
+  get effectiveDayMode => $composableBuilder(
+    column: $table.effectiveDayMode,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
@@ -2088,13 +2006,8 @@ class $$HabitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get effectiveDayCategory => $composableBuilder(
-    column: $table.effectiveDayCategory,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get effectiveDayVariant => $composableBuilder(
-    column: $table.effectiveDayVariant,
+  ColumnOrderings<int> get effectiveDayMode => $composableBuilder(
+    column: $table.effectiveDayMode,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2188,15 +2101,9 @@ class $$HabitsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumnWithTypeConverter<EffectiveDayCategory, int>
-  get effectiveDayCategory => $composableBuilder(
-    column: $table.effectiveDayCategory,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<EffectiveDayVariant, int>
-  get effectiveDayVariant => $composableBuilder(
-    column: $table.effectiveDayVariant,
+  GeneratedColumnWithTypeConverter<EffectiveDayMode, int>
+  get effectiveDayMode => $composableBuilder(
+    column: $table.effectiveDayMode,
     builder: (column) => column,
   );
 
@@ -2310,10 +2217,7 @@ class $$HabitsTableTableManager
                 Value<String> colorHex = const Value.absent(),
                 Value<int> timesPerDay = const Value.absent(),
                 Value<int> monthlyTarget = const Value.absent(),
-                Value<EffectiveDayCategory> effectiveDayCategory =
-                    const Value.absent(),
-                Value<EffectiveDayVariant> effectiveDayVariant =
-                    const Value.absent(),
+                Value<EffectiveDayMode> effectiveDayMode = const Value.absent(),
                 Value<int?> tagId = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -2329,8 +2233,7 @@ class $$HabitsTableTableManager
                 colorHex: colorHex,
                 timesPerDay: timesPerDay,
                 monthlyTarget: monthlyTarget,
-                effectiveDayCategory: effectiveDayCategory,
-                effectiveDayVariant: effectiveDayVariant,
+                effectiveDayMode: effectiveDayMode,
                 tagId: tagId,
                 sortOrder: sortOrder,
                 createdAt: createdAt,
@@ -2348,9 +2251,7 @@ class $$HabitsTableTableManager
                 required String colorHex,
                 Value<int> timesPerDay = const Value.absent(),
                 Value<int> monthlyTarget = const Value.absent(),
-                required EffectiveDayCategory effectiveDayCategory,
-                Value<EffectiveDayVariant> effectiveDayVariant =
-                    const Value.absent(),
+                required EffectiveDayMode effectiveDayMode,
                 Value<int?> tagId = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -2366,8 +2267,7 @@ class $$HabitsTableTableManager
                 colorHex: colorHex,
                 timesPerDay: timesPerDay,
                 monthlyTarget: monthlyTarget,
-                effectiveDayCategory: effectiveDayCategory,
-                effectiveDayVariant: effectiveDayVariant,
+                effectiveDayMode: effectiveDayMode,
                 tagId: tagId,
                 sortOrder: sortOrder,
                 createdAt: createdAt,

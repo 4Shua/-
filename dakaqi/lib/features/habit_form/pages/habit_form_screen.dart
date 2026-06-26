@@ -36,8 +36,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   String _colorHex = HabitColors.defaultHex;
   int _timesPerDay = 1;
   int _monthlyTarget = 20;
-  EffectiveDayCategory _effectiveDayCategory = EffectiveDayCategory.everyDay;
-  EffectiveDayVariant _effectiveDayVariant = EffectiveDayVariant.weekday;
+  EffectiveDayMode _effectiveDayMode = EffectiveDayMode.anyDay;
   int? _selectedTagId;
 
   bool _windowRestricted = false;
@@ -49,6 +48,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   @override
   void initState() {
     super.initState();
+    _advancedExpanded = widget.isEditing;
     if (widget.isEditing) {
       _loading = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadHabit());
@@ -75,8 +75,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       _timesPerDayController.text = '${habit.timesPerDay}';
       _monthlyTarget = habit.monthlyTarget;
       _monthlyTargetController.text = '${habit.monthlyTarget}';
-      _effectiveDayCategory = habit.effectiveDayCategory;
-      _effectiveDayVariant = habit.effectiveDayVariant;
+      _effectiveDayMode = habit.effectiveDayMode;
       _selectedTagId = habit.tagId;
       if (tag != null) _tagController.text = tag.name;
       _reminderEnabled = habit.reminderEnabled;
@@ -131,8 +130,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
           colorHex: _colorHex,
           timesPerDay: _timesPerDay,
           monthlyTarget: _monthlyTarget,
-          effectiveDayCategory: _effectiveDayCategory,
-          effectiveDayVariant: _effectiveDayVariant,
+          effectiveDayMode: _effectiveDayMode,
           tagId: tagId,
           clearTag: tagId == null,
           reminderEnabled: _reminderEnabled,
@@ -150,8 +148,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
           colorHex: _colorHex,
           timesPerDay: _timesPerDay,
           monthlyTarget: _monthlyTarget,
-          effectiveDayCategory: _effectiveDayCategory,
-          effectiveDayVariant: _effectiveDayVariant,
+          effectiveDayMode: _effectiveDayMode,
           tagId: tagId,
           reminderEnabled: _reminderEnabled,
           reminderTime: reminderTime,
@@ -206,7 +203,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                         color: _themeColor,
                         onSelected: (k) => setState(() => _iconKey = k),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       _fieldSection(
                         '名称',
                         TextField(
@@ -253,11 +250,13 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                           ),
                         ),
                         child: _saving
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 22,
                                 height: 22,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: _themeColor,
+                                ),
                               )
                             : const Text(
                                 '保存',
@@ -307,43 +306,57 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   }
 
   Widget _buildAdvancedPanel(List<Tag> tags) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(AppSpacing.radius),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => setState(() => _advancedExpanded = !_advancedExpanded),
-            borderRadius: BorderRadius.circular(AppSpacing.radius),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  const Text(
-                    '高级选项',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => setState(() => _advancedExpanded = !_advancedExpanded),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _FadeDividerLine(
+                  fadeOut: AxisDirection.left,
+                  accent: _themeColor,
+                ),
+                const SizedBox(width: 20),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '复杂的',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary.withValues(alpha: 0.85),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    _advancedExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      _advancedExpanded
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                      size: 18,
+                      color: AppColors.textSecondary.withValues(alpha: 0.55),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                _FadeDividerLine(
+                  fadeOut: AxisDirection.right,
+                  accent: _themeColor,
+                ),
+              ],
             ),
           ),
-          if (_advancedExpanded) ...[
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+        ),
+        if (_advancedExpanded)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                   const Text('频率',
                       style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
@@ -375,6 +388,24 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                           label: const Text('无'),
                           selected: _selectedTagId == null &&
                               _tagController.text.trim().isEmpty,
+                          selectedColor: _themeColor.withValues(alpha: 0.16),
+                          labelStyle: TextStyle(
+                            color: _selectedTagId == null &&
+                                    _tagController.text.trim().isEmpty
+                                ? _themeColor
+                                : AppColors.textPrimary,
+                            fontWeight: _selectedTagId == null &&
+                                    _tagController.text.trim().isEmpty
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
+                          side: BorderSide(
+                            color: _selectedTagId == null &&
+                                    _tagController.text.trim().isEmpty
+                                ? _themeColor.withValues(alpha: 0.35)
+                                : Colors.transparent,
+                          ),
+                          showCheckmark: false,
                           onSelected: (_) => setState(() {
                             _selectedTagId = null;
                             _tagController.clear();
@@ -384,6 +415,21 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                           ChoiceChip(
                             label: Text(tag.name),
                             selected: _selectedTagId == tag.id,
+                            selectedColor: _themeColor.withValues(alpha: 0.16),
+                            labelStyle: TextStyle(
+                              color: _selectedTagId == tag.id
+                                  ? _themeColor
+                                  : AppColors.textPrimary,
+                              fontWeight: _selectedTagId == tag.id
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                            ),
+                            side: BorderSide(
+                              color: _selectedTagId == tag.id
+                                  ? _themeColor.withValues(alpha: 0.35)
+                                  : Colors.transparent,
+                            ),
+                            showCheckmark: false,
                             onSelected: (_) => setState(() {
                               _selectedTagId = tag.id;
                               _tagController.text = tag.name;
@@ -404,9 +450,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                 ],
               ),
             ),
-          ],
-        ],
-      ),
+      ],
     );
   }
 
@@ -415,6 +459,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       children: [
         _CompactCountStepper(
           controller: _timesPerDayController,
+          accent: _themeColor,
           onDecrement: _timesPerDay > 1
               ? () => _setTimesPerDay(_timesPerDay - 1)
               : null,
@@ -439,6 +484,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       children: [
         _CompactCountStepper(
           controller: _monthlyTargetController,
+          accent: _themeColor,
           onDecrement: _monthlyTarget > 1
               ? () => _setMonthlyTarget(_monthlyTarget - 1)
               : null,
@@ -459,93 +505,10 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   }
 
   Widget _buildEffectiveDaySelector() {
-    final color = _themeColor;
-    return Row(
-      children: [
-        ChoiceChip(
-          label: const Text('每天'),
-          selected: _effectiveDayCategory == EffectiveDayCategory.everyDay,
-          onSelected: (_) => setState(
-            () => _effectiveDayCategory = EffectiveDayCategory.everyDay,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Material(
-            color: _effectiveDayCategory == EffectiveDayCategory.weekdayWeekend
-                ? color.withValues(alpha: 0.14)
-                : AppColors.chipBackground,
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                setState(() {
-                  if (_effectiveDayCategory ==
-                      EffectiveDayCategory.weekdayWeekend) {
-                    _effectiveDayVariant =
-                        _effectiveDayVariant == EffectiveDayVariant.weekday
-                            ? EffectiveDayVariant.weekend
-                            : EffectiveDayVariant.weekday;
-                  } else {
-                    _effectiveDayCategory =
-                        EffectiveDayCategory.weekdayWeekend;
-                  }
-                });
-              },
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '周中',
-                      style: TextStyle(
-                        fontWeight: _effectiveDayCategory ==
-                                    EffectiveDayCategory.weekdayWeekend &&
-                                _effectiveDayVariant ==
-                                    EffectiveDayVariant.weekday
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: _effectiveDayCategory ==
-                                EffectiveDayCategory.weekdayWeekend
-                            ? color
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(
-                        Icons.swap_horiz,
-                        size: 16,
-                        color: _effectiveDayCategory ==
-                                EffectiveDayCategory.weekdayWeekend
-                            ? color.withValues(alpha: 0.8)
-                            : AppColors.textSecondary.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    Text(
-                      '周末',
-                      style: TextStyle(
-                        fontWeight: _effectiveDayCategory ==
-                                    EffectiveDayCategory.weekdayWeekend &&
-                                _effectiveDayVariant ==
-                                    EffectiveDayVariant.weekend
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: _effectiveDayCategory ==
-                                EffectiveDayCategory.weekdayWeekend
-                            ? color
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    return _TripleDayChip(
+      mode: _effectiveDayMode,
+      accent: _themeColor,
+      onSelected: (mode) => setState(() => _effectiveDayMode = mode),
     );
   }
 
@@ -587,7 +550,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
-            Switch.adaptive(
+            _themedSwitch(
               value: _windowRestricted,
               onChanged: (v) => setState(() => _windowRestricted = v),
             ),
@@ -601,6 +564,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                 child: _TimeBox(
                   label: '开始',
                   time: _windowStart,
+                  accent: _themeColor,
                   onTap: () async {
                     final picked = await _pickTime(initial: _windowStart);
                     if (picked != null) setState(() => _windowStart = picked);
@@ -612,6 +576,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                 child: _TimeBox(
                   label: '结束',
                   time: _windowEnd,
+                  accent: _themeColor,
                   onTap: () async {
                     final picked = await _pickTime(initial: _windowEnd);
                     if (picked != null) setState(() => _windowEnd = picked);
@@ -637,7 +602,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
-            Switch.adaptive(
+            _themedSwitch(
               value: _reminderEnabled,
               onChanged: (v) => setState(() => _reminderEnabled = v),
             ),
@@ -648,6 +613,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
           _TimeBox(
             label: '提醒',
             time: _reminderTime,
+            accent: _themeColor,
             onTap: () async {
               final picked = await _pickTime(initial: _reminderTime);
               if (picked != null) setState(() => _reminderTime = picked);
@@ -665,11 +631,32 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       context: context,
       initialTime: initial,
       builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child ?? const SizedBox.shrink(),
+        final scheme = Theme.of(context).colorScheme.copyWith(
+              primary: _themeColor,
+              onPrimary: Colors.white,
+            );
+        return Theme(
+          data: Theme.of(context).copyWith(colorScheme: scheme),
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
+    );
+  }
+
+  Widget _themedSwitch({
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: _themeColor,
+            ),
+      ),
+      child: Switch.adaptive(value: value, onChanged: onChanged),
     );
   }
 }
@@ -679,16 +666,18 @@ class _TimeBox extends StatelessWidget {
     required this.label,
     required this.time,
     required this.onTap,
+    required this.accent,
   });
 
   final String label;
   final TimeOfDay time;
   final VoidCallback onTap;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.chipBackground,
+      color: accent.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -707,9 +696,10 @@ class _TimeBox extends StatelessWidget {
               const Spacer(),
               Text(
                 TimeUtils.formatTimeOfDay(time),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
+                  color: accent,
                 ),
               ),
             ],
@@ -727,6 +717,7 @@ class _CompactCountStepper extends StatelessWidget {
     required this.onIncrement,
     required this.onChanged,
     required this.onNormalize,
+    required this.accent,
     this.maxValue = 20,
   });
 
@@ -735,6 +726,7 @@ class _CompactCountStepper extends StatelessWidget {
   final VoidCallback? onIncrement;
   final ValueChanged<int> onChanged;
   final VoidCallback onNormalize;
+  final Color accent;
   final int maxValue;
 
   @override
@@ -742,17 +734,21 @@ class _CompactCountStepper extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: AppColors.chipBackground,
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _StepperIconButton(icon: Icons.remove, onTap: onDecrement),
+          _StepperIconButton(
+            icon: Icons.remove,
+            onTap: onDecrement,
+            accent: accent,
+          ),
           Container(
             width: 1,
             height: 22,
-            color: AppColors.textSecondary.withValues(alpha: 0.2),
+            color: accent.withValues(alpha: 0.18),
           ),
           SizedBox(
             width: 44,
@@ -760,9 +756,10 @@ class _CompactCountStepper extends StatelessWidget {
               controller: controller,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
+                color: accent,
               ),
               decoration: const InputDecoration(
                 isDense: true,
@@ -782,9 +779,13 @@ class _CompactCountStepper extends StatelessWidget {
           Container(
             width: 1,
             height: 22,
-            color: AppColors.textSecondary.withValues(alpha: 0.2),
+            color: accent.withValues(alpha: 0.18),
           ),
-          _StepperIconButton(icon: Icons.add, onTap: onIncrement),
+          _StepperIconButton(
+            icon: Icons.add,
+            onTap: onIncrement,
+            accent: accent,
+          ),
         ],
       ),
     );
@@ -792,10 +793,15 @@ class _CompactCountStepper extends StatelessWidget {
 }
 
 class _StepperIconButton extends StatelessWidget {
-  const _StepperIconButton({required this.icon, required this.onTap});
+  const _StepperIconButton({
+    required this.icon,
+    required this.onTap,
+    required this.accent,
+  });
 
   final IconData icon;
   final VoidCallback? onTap;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -812,11 +818,198 @@ class _StepperIconButton extends StatelessWidget {
             icon,
             size: 18,
             color: enabled
-                ? AppColors.textPrimary
+                ? accent
                 : AppColors.textSecondary.withValues(alpha: 0.35),
           ),
         ),
       ),
     );
   }
+}
+
+/// 从文字向两侧渐变消失的分隔线。
+class _FadeDividerLine extends StatelessWidget {
+  const _FadeDividerLine({
+    required this.fadeOut,
+    this.accent,
+  });
+
+  final AxisDirection fadeOut;
+  final Color? accent;
+
+  static const _length = 84.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final peak = (accent ?? AppColors.textSecondary).withValues(alpha: 0.32);
+    final (begin, end) = switch (fadeOut) {
+      AxisDirection.left => (Alignment.centerRight, Alignment.centerLeft),
+      _ => (Alignment.centerLeft, Alignment.centerRight),
+    };
+
+    return SizedBox(
+      width: _length,
+      height: 1,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: begin,
+            end: end,
+            stops: const [0, 0.55, 1],
+            colors: [
+              peak,
+              peak.withValues(alpha: 0.12),
+              peak.withValues(alpha: 0),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TripleDayChip extends StatelessWidget {
+  const _TripleDayChip({
+    required this.mode,
+    required this.accent,
+    required this.onSelected,
+  });
+
+  final EffectiveDayMode mode;
+  final Color accent;
+  final ValueChanged<EffectiveDayMode> onSelected;
+
+  static const _height = 36.0;
+  static const _labels = ['周中', '周末', '管他周几'];
+  static const _modes = [
+    EffectiveDayMode.weekday,
+    EffectiveDayMode.weekend,
+    EffectiveDayMode.anyDay,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _height,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Material(
+          color: AppColors.chipBackground,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipPath(
+                clipper: _TripleSegmentClipper(
+                  segment: _modes.indexOf(mode),
+                ),
+                child: ColoredBox(color: accent.withValues(alpha: 0.16)),
+              ),
+              CustomPaint(
+                painter: _TripleDividerPainter(
+                  color: accent.withValues(alpha: 0.32),
+                ),
+              ),
+              Row(
+                children: List.generate(3, (index) {
+                  final selected = mode == _modes[index];
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () => onSelected(_modes[index]),
+                      child: Center(
+                        child: Text(
+                          _labels[index],
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: index == 2 ? 11.5 : 13,
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w500,
+                            color: selected
+                                ? accent
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TripleSegmentClipper extends CustomClipper<Path> {
+  const _TripleSegmentClipper({required this.segment});
+
+  final int segment;
+
+  static const _skew = 0.04;
+
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final b1Top = w / 3 + w * _skew;
+    final b1Bottom = w / 3 - w * _skew;
+    final b2Top = w * 2 / 3 + w * _skew;
+    final b2Bottom = w * 2 / 3 - w * _skew;
+
+    return switch (segment) {
+      0 => Path()
+        ..moveTo(0, 0)
+        ..lineTo(b1Top, 0)
+        ..lineTo(b1Bottom, h)
+        ..lineTo(0, h)
+        ..close(),
+      1 => Path()
+        ..moveTo(b1Top, 0)
+        ..lineTo(b2Top, 0)
+        ..lineTo(b2Bottom, h)
+        ..lineTo(b1Bottom, h)
+        ..close(),
+      _ => Path()
+        ..moveTo(b2Top, 0)
+        ..lineTo(w, 0)
+        ..lineTo(w, h)
+        ..lineTo(b2Bottom, h)
+        ..close(),
+    };
+  }
+
+  @override
+  bool shouldReclip(covariant _TripleSegmentClipper oldClipper) =>
+      oldClipper.segment != segment;
+}
+
+class _TripleDividerPainter extends CustomPainter {
+  const _TripleDividerPainter({required this.color});
+
+  final Color color;
+
+  static const _skew = 0.04;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.1
+      ..style = PaintingStyle.stroke;
+
+    final w = size.width;
+    final h = size.height;
+    final lines = [
+      (Offset(w / 3 + w * _skew, 2), Offset(w / 3 - w * _skew, h - 2)),
+      (Offset(w * 2 / 3 + w * _skew, 2), Offset(w * 2 / 3 - w * _skew, h - 2)),
+    ];
+    for (final (start, end) in lines) {
+      canvas.drawLine(start, end, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TripleDividerPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

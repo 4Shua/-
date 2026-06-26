@@ -118,77 +118,6 @@ class HabitRepository {
     });
   }
 
-  Future<void> seedIfEmpty() async {
-    final count = await _db.select(_db.habits).get().then((r) => r.length);
-    if (count > 0) return;
-
-    final pianoTagId = await _db.into(_db.tags).insert(
-          TagsCompanion.insert(name: 'piano', colorHex: const Value('#9B59B6')),
-        );
-
-    final pianoId = await _db.into(_db.habits).insert(
-          HabitsCompanion.insert(
-            name: '练琴',
-            description: const Value('每天必备练琴'),
-            iconKey: 'piano',
-            colorHex: '#E74C3C',
-            timesPerDay: const Value(1),
-            monthlyTarget: const Value(20),
-            effectiveDayCategory: EffectiveDayCategory.everyDay,
-            tagId: Value(pianoTagId),
-            sortOrder: const Value(0),
-          ),
-        );
-
-    final gegeId = await _db.into(_db.habits).insert(
-          HabitsCompanion.insert(
-            name: '哥哥',
-            description: const Value('我想你了'),
-            iconKey: 'favorite',
-            colorHex: '#3498DB',
-            timesPerDay: const Value(3),
-            monthlyTarget: const Value(20),
-            effectiveDayCategory: EffectiveDayCategory.everyDay,
-            sortOrder: const Value(1),
-          ),
-        );
-
-    await _seedDemoCheckIns(pianoId, gegeId);
-  }
-
-  Future<void> _seedDemoCheckIns(int pianoId, int gegeId) async {
-    final today = AppDateUtils.today();
-    final records = <CheckInRecordsCompanion>[];
-
-    for (var i = 30; i >= 0; i--) {
-      final date = today.subtract(Duration(days: i));
-      if (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday) {
-        continue;
-      }
-      final key = AppDateUtils.formatDate(date);
-      records.add(
-        CheckInRecordsCompanion.insert(
-          habitId: pianoId,
-          date: key,
-          count: const Value(1),
-        ),
-      );
-      if (i % 3 == 0) {
-        records.add(
-          CheckInRecordsCompanion.insert(
-            habitId: gegeId,
-            date: key,
-            count: Value(i % 9 == 0 ? 3 : (i % 3) + 1),
-          ),
-        );
-      }
-    }
-
-    for (final record in records) {
-      await _db.into(_db.checkInRecords).insert(record);
-    }
-  }
-
   Future<Habit?> getHabit(int id) {
     return (_db.select(_db.habits)..where((t) => t.id.equals(id)))
         .getSingleOrNull();
@@ -207,8 +136,7 @@ class HabitRepository {
     required String colorHex,
     required int timesPerDay,
     required int monthlyTarget,
-    required EffectiveDayCategory effectiveDayCategory,
-    EffectiveDayVariant effectiveDayVariant = EffectiveDayVariant.weekday,
+    required EffectiveDayMode effectiveDayMode,
     int? tagId,
     bool reminderEnabled = false,
     String? reminderTime,
@@ -224,8 +152,7 @@ class HabitRepository {
             colorHex: colorHex,
             timesPerDay: Value(timesPerDay.clamp(1, 20)),
             monthlyTarget: Value(monthlyTarget.clamp(1, 99)),
-            effectiveDayCategory: effectiveDayCategory,
-            effectiveDayVariant: Value(effectiveDayVariant),
+            effectiveDayMode: effectiveDayMode,
             tagId: Value(tagId),
             sortOrder: Value(sortOrder),
             reminderEnabled: Value(reminderEnabled),
@@ -249,8 +176,7 @@ class HabitRepository {
     required String colorHex,
     required int timesPerDay,
     required int monthlyTarget,
-    required EffectiveDayCategory effectiveDayCategory,
-    EffectiveDayVariant effectiveDayVariant = EffectiveDayVariant.weekday,
+    required EffectiveDayMode effectiveDayMode,
     int? tagId,
     bool clearTag = false,
     bool reminderEnabled = false,
@@ -266,8 +192,7 @@ class HabitRepository {
             colorHex: Value(colorHex),
             timesPerDay: Value(timesPerDay.clamp(1, 20)),
             monthlyTarget: Value(monthlyTarget.clamp(1, 99)),
-            effectiveDayCategory: Value(effectiveDayCategory),
-            effectiveDayVariant: Value(effectiveDayVariant),
+            effectiveDayMode: Value(effectiveDayMode),
             tagId: clearTag ? const Value(null) : Value(tagId),
             reminderEnabled: Value(reminderEnabled),
             reminderTime: Value(reminderTime),
@@ -309,5 +234,13 @@ class HabitRepository {
     final existing = await findTagIdByName(trimmed);
     if (existing != null) return existing;
     return createTag(trimmed);
+  }
+
+  Future<void> deleteHabit(int id) async {
+    await ReminderService.cancelHabit(id);
+    await (_db.delete(_db.checkInRecords)
+          ..where((t) => t.habitId.equals(id)))
+        .go();
+    await (_db.delete(_db.habits)..where((t) => t.id.equals(id))).go();
   }
 }
